@@ -57,12 +57,22 @@ endif()
 # add cross-platforms source files and header files 
 list(APPEND GAME_SOURCE
      Classes/AppDelegate.cpp
+     Classes/FishActor.cpp
+     Classes/FishingLayer.cpp
+     Classes/FishingPauseLayer.cpp
+     Classes/FishingScene.cpp
      Classes/HelloWorldScene.cpp
+     Classes/MainMenuLayer.cpp
      Classes/MainMenuScene.cpp
      )
 list(APPEND GAME_HEADER
      Classes/AppDelegate.h
+     Classes/FishActor.h
+     Classes/FishingLayer.h
+     Classes/FishingPauseLayer.h
+     Classes/FishingScene.h
      Classes/HelloWorldScene.h
+     Classes/MainMenuLayer.h
      Classes/MainMenuScene.h
      )
 
