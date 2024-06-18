@@ -7,6 +7,7 @@
 //
 
 #include "FishingPauseLayer.h"
+
 using namespace cocos2d::ui;
 
 bool FishingPauseLayer::init(){
@@ -21,17 +22,17 @@ bool FishingPauseLayer::init(){
 	Button* settingBtn = dynamic_cast<Button*>(pauseWidget->getChildByName("SettingBtn"));
     
 	//Add the touch event to each button
-	continueBtn->addTouchEventListener(this, toucheventselector(FishingPauseLayer::continueEvent));
-	mainMenuBtn->addTouchEventListener(this, toucheventselector(FishingPauseLayer::mainMenuEvent));
-	selectBtn->addTouchEventListener(this, toucheventselector(FishingPauseLayer::selectEvent));
-	settingBtn->addTouchEventListener(this, toucheventselector(FishingPauseLayer::settingEvent));
+	continueBtn->addTouchEventListener(CC_CALLBACK_2(FishingPauseLayer::continueEvent, this));
+	mainMenuBtn->addTouchEventListener(CC_CALLBACK_2(FishingPauseLayer::mainMenuEvent, this));
+	selectBtn->addTouchEventListener(CC_CALLBACK_2(FishingPauseLayer::selectEvent, this));
+	settingBtn->addTouchEventListener(CC_CALLBACK_2(FishingPauseLayer::settingEvent, this));
 	
 	addChild(pauseWidget,0);
 	
 	return true;
 }
 
-void FishingPauseLayer::continueEvent(Widget* target, ui::Widget::TouchEventType type){
+void FishingPauseLayer::continueEvent(Ref* target, ui::Widget::TouchEventType type){
 	
 	if(type==ui::Widget::TouchEventType::ENDED){
         
@@ -50,12 +51,12 @@ void FishingPauseLayer::continueEvent(Widget* target, ui::Widget::TouchEventType
 	}
 }
 
-void FishingPauseLayer::selectEvent(Widget* target, ui::Widget::TouchEventType type){
+void FishingPauseLayer::selectEvent(Ref* target, ui::Widget::TouchEventType type){
 	
 	
 }
 
-void FishingPauseLayer::mainMenuEvent(Widget* target, ui::Widget::TouchEventType type){
+void FishingPauseLayer::mainMenuEvent(Ref* target, ui::Widget::TouchEventType type){
 	
 	//back from the replace scene
 	if(type==ui::Widget::TouchEventType::ENDED){
@@ -66,7 +67,7 @@ void FishingPauseLayer::mainMenuEvent(Widget* target, ui::Widget::TouchEventType
 	}
 }
 
-void FishingPauseLayer::settingEvent(Widget* target, ui::Widget::TouchEventType type){
+void FishingPauseLayer::settingEvent(Ref* target, ui::Widget::TouchEventType type){
 	
 	
 }

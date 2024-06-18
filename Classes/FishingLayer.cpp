@@ -61,18 +61,18 @@ bool FishingLayer::init(){
 	widget->setTouchEnabled(true);
 	
 	//Add the touch event callback function
-	widget->addTouchEventListener(this, toucheventselector(FishingLayer::shootEvent));
+	widget->addTouchEventListener(CC_CALLBACK_2(FishingLayer::shootEvent, this));
 	
 	//Get the pause buton and its touch event callback function
 	auto pauseBtn = dynamic_cast<Button*>(widget->getChildByName("pauseBtn"));
-	pauseBtn->addTouchEventListener(this, toucheventselector(FishingLayer::pauseEvent));
+	pauseBtn->addTouchEventListener(CC_CALLBACK_2(FishingLayer::pauseEvent, this));
     
 	//turn on the background music
 	auto turnOnMusicBtn= dynamic_cast<ImageView *>(widget->getChildByName("ImageView_42"));
-	turnOnMusicBtn->addTouchEventListener(this,toucheventselector(FishingLayer::turnOnMusic));
+	turnOnMusicBtn->addTouchEventListener(CC_CALLBACK_2(FishingLayer::turnOnMusic, this));
 	//turn off the background music
 	auto turnOffMusicBtn= dynamic_cast<Button *>(widget->getChildByName("music"));
-	turnOffMusicBtn->addTouchEventListener(this,toucheventselector(FishingLayer::turnOffMusic));
+	turnOffMusicBtn->addTouchEventListener(CC_CALLBACK_2(FishingLayer::turnOffMusic, this));
     
 	//addChild(turnOffMusicBtn,1,99);
 	//Activate update
@@ -91,7 +91,7 @@ bool FishingLayer::init(){
 	return true;
 }
 
-void FishingLayer::shootEvent(Widget* target, ui::Widget::TouchEventType type){
+void FishingLayer::shootEvent(Ref* target, ui::Widget::TouchEventType type){
 	
 	if(type ==  ui::Widget::TouchEventType::BEGAN){
         
@@ -220,7 +220,7 @@ void FishingLayer::netRelease(){
 	}
 }
 
-void FishingLayer::pauseEvent(Widget* target, ui::Widget::TouchEventType type){
+void FishingLayer::pauseEvent(Ref* target, ui::Widget::TouchEventType type){
     
 	if(type ==  ui::Widget::TouchEventType::ENDED){
 		
@@ -243,13 +243,13 @@ void FishingLayer::pauseEvent(Widget* target, ui::Widget::TouchEventType type){
 	}
 }
 
-void FishingLayer::turnOffMusic(Widget* target, ui::Widget::TouchEventType type)
+void FishingLayer::turnOffMusic(Ref* target, ui::Widget::TouchEventType type)
 {
     //CocosDenshion::SimpleAudioEngine::getInstance()->stopBackgroundMusic("Audio/music_1.mp3");
     CocosDenshion::SimpleAudioEngine::getInstance()->pauseBackgroundMusic();
 }
 
-void FishingLayer::turnOnMusic(Widget* target, ui::Widget::TouchEventType type){
+void FishingLayer::turnOnMusic(Ref* target, ui::Widget::TouchEventType type){
     
 	CocosDenshion::SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
 }

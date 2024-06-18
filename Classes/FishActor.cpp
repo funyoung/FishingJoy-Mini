@@ -101,7 +101,7 @@ bool SmallFishActor::init(){
 
 void SmallFishActor::activateFishMovement(){
 	
-    schedule(schedule_selector(FishActor::updateFishMovement), 3+rand()%2);
+    schedule(CC_SCHEDULE_SELECTOR(FishActor::updateFishMovement), 3+rand()%2);
 }
 
 Animate* SmallFishActor::playDeathAnimation(){
