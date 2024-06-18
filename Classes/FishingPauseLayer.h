@@ -28,10 +28,10 @@ public:
 protected:
 	
 	/* Events of continue button, select scene button, main menu event, setting button */
-	void continueEvent(ui::Widget* target, ui::TouchEventType type);
-	void selectEvent(ui::Widget* target, ui::TouchEventType type);
-	void mainMenuEvent(ui::Widget* target, ui::TouchEventType type);
-	void settingEvent(ui::Widget* target, ui::TouchEventType type);
+	void continueEvent(ui::Widget* target, ui::Widget::TouchEventType type);
+	void selectEvent(ui::Widget* target, ui::Widget::TouchEventType type);
+	void mainMenuEvent(ui::Widget* target, ui::Widget::TouchEventType type);
+	void settingEvent(ui::Widget* target, ui::Widget::TouchEventType type);
 };
 
 #endif

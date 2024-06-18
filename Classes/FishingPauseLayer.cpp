@@ -31,9 +31,9 @@ bool FishingPauseLayer::init(){
 	return true;
 }
 
-void FishingPauseLayer::continueEvent(Widget* target, TouchEventType type){
+void FishingPauseLayer::continueEvent(Widget* target, ui::Widget::TouchEventType type){
 	
-	if(type==TouchEventType::TOUCH_EVENT_ENDED){
+	if(type==ui::Widget::TouchEventType::ENDED){
         
 		//Set the background to normal
 		auto background = (Sprite*)(getParent()->getChildByTag(101)->getChildByTag(102));
@@ -50,15 +50,15 @@ void FishingPauseLayer::continueEvent(Widget* target, TouchEventType type){
 	}
 }
 
-void FishingPauseLayer::selectEvent(Widget* target, TouchEventType type){
+void FishingPauseLayer::selectEvent(Widget* target, ui::Widget::TouchEventType type){
 	
 	
 }
 
-void FishingPauseLayer::mainMenuEvent(Widget* target, TouchEventType type){
+void FishingPauseLayer::mainMenuEvent(Widget* target, ui::Widget::TouchEventType type){
 	
 	//back from the replace scene
-	if(type==TouchEventType::TOUCH_EVENT_ENDED){
+	if(type==ui::Widget::TouchEventType::ENDED){
         
 		auto replaceScene = TransitionFadeBL::create(2, MainMenuScene::create());
         
@@ -66,7 +66,7 @@ void FishingPauseLayer::mainMenuEvent(Widget* target, TouchEventType type){
 	}
 }
 
-void FishingPauseLayer::settingEvent(Widget* target, TouchEventType type){
+void FishingPauseLayer::settingEvent(Widget* target, ui::Widget::TouchEventType type){
 	
 	
 }

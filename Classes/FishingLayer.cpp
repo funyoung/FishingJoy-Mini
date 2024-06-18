@@ -91,14 +91,14 @@ bool FishingLayer::init(){
 	return true;
 }
 
-void FishingLayer::shootEvent(Widget* target,TouchEventType type){
+void FishingLayer::shootEvent(Widget* target, ui::Widget::TouchEventType type){
 	
-	if(type == TouchEventType::TOUCH_EVENT_BEGAN){
+	if(type ==  ui::Widget::TouchEventType::BEGAN){
         
 		//Change the texture of the cannot at the beginning of touch to make it more real
 		cannon->loadTexture("actor_cannon1_72.png", UI_TEX_TYPE_PLIST);
 		
-	}else if(type == TouchEventType::TOUCH_EVENT_ENDED){
+	}else if(type ==  ui::Widget::TouchEventType::ENDED){
 		
 		//Change back the texture of the cannon at the end of the touch event
 		cannon->loadTexture("actor_cannon1_71.png", UI_TEX_TYPE_PLIST);
@@ -111,7 +111,7 @@ void FishingLayer::shootEvent(Widget* target,TouchEventType type){
 		bulletShoot(target->getTouchEndPos());
 		
 		
-	}else if(type == TouchEventType::TOUCH_EVENT_MOVED){
+	}else if(type ==  ui::Widget::TouchEventType::MOVED){
         
 		//Change the cannon ratation
 		FishingLayer::setCannonRotation(target, target->getTouchMovePos());
@@ -220,9 +220,9 @@ void FishingLayer::netRelease(){
 	}
 }
 
-void FishingLayer::pauseEvent(Widget* target, TouchEventType type){
+void FishingLayer::pauseEvent(Widget* target, ui::Widget::TouchEventType type){
     
-	if(type == TouchEventType::TOUCH_EVENT_ENDED){
+	if(type ==  ui::Widget::TouchEventType::ENDED){
 		
 		//Get the windows size of fishlayer
 		auto winSize = Director::getInstance()->getWinSize();
@@ -243,13 +243,13 @@ void FishingLayer::pauseEvent(Widget* target, TouchEventType type){
 	}
 }
 
-void FishingLayer::turnOffMusic(Widget* target,TouchEventType type)
+void FishingLayer::turnOffMusic(Widget* target, ui::Widget::TouchEventType type)
 {
     //CocosDenshion::SimpleAudioEngine::getInstance()->stopBackgroundMusic("Audio/music_1.mp3");
     CocosDenshion::SimpleAudioEngine::getInstance()->pauseBackgroundMusic();
 }
 
-void FishingLayer::turnOnMusic(Widget* target,TouchEventType type){
+void FishingLayer::turnOnMusic(Widget* target, ui::Widget::TouchEventType type){
     
 	CocosDenshion::SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
 }

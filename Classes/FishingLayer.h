@@ -56,16 +56,16 @@ protected:
 	virtual void update(float delta);
 	
 	/** Callback func of shoot */
-	void shootEvent(Widget* target,TouchEventType type);
+	void shootEvent(Widget* target, ui::Widget::TouchEventType type);
     
 	/** Callback func of pause button */
-	void pauseEvent(Widget* target,TouchEventType type);
+	void pauseEvent(Widget* target, ui::Widget::TouchEventType type);
     
 	/**turn off backgroundMusic*/
-	void turnOffMusic(Widget* target,TouchEventType type);
+	void turnOffMusic(Widget* target, ui::Widget::TouchEventType type);
     
 	/**turn on backgroundMusic*/
-	void turnOnMusic(Widget* target,TouchEventType type);
+	void turnOnMusic(Widget* target, ui::Widget::TouchEventType type);
     
 	void bulletShoot(Point endPosition);
 	
