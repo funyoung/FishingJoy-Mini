@@ -9,13 +9,18 @@
 #include "MainMenuScene.h"
 #include "MainMenuLayer.h"
 
+Scene* MainMenuScene::createScene()
+{
+    return MainMenuScene::create();
+}
+
 bool MainMenuScene::init(){
 
 	//Init the main menu layer
-	MainMenuLayer* mainMenuLyaer = MainMenuLayer::create();
+	MainMenuLayer* mainMenuLayer = MainMenuLayer::create();
 	
 	//Add the main menu layer to the scene
-	addChild(mainMenuLyaer,10);
+	addChild(mainMenuLayer,10);
 	
 	return true;
 }
