@@ -157,7 +157,7 @@ bool AngelFishActor::init(){
 
 void AngelFishActor::activateFishMovement(){
 	
-    schedule(schedule_selector(FishActor::updateFishMovement), 3.5+rand()%2);
+    schedule(CC_SCHEDULE_SELECTOR(FishActor::updateFishMovement), 3.5+rand()%2);
 }
 
 
@@ -210,7 +210,7 @@ bool CroakerActor::init(){
 
 void CroakerActor::activateFishMovement(){
 	
-    schedule(schedule_selector(FishActor::updateFishMovement), 2+rand()%4);
+    schedule(CC_SCHEDULE_SELECTOR(FishActor::updateFishMovement), 2+rand()%4);
 }
 
 Animate* CroakerActor::playDeathAnimation(){
@@ -263,7 +263,7 @@ bool AmphiprionActor::init(){
 
 void AmphiprionActor::activateFishMovement(){
 	
-    schedule(schedule_selector(FishActor::updateFishMovement), 1+rand()%4);
+    schedule(CC_SCHEDULE_SELECTOR(FishActor::updateFishMovement), 1+rand()%4);
 }
 
 Animate* AmphiprionActor::playDeathAnimation(){
@@ -319,7 +319,7 @@ bool BreamActor::init(){
 
 void BreamActor::activateFishMovement(){
 	
-    schedule(schedule_selector(FishActor::updateFishMovement), 2+rand()%3);
+    schedule(CC_SCHEDULE_SELECTOR(FishActor::updateFishMovement), 2+rand()%3);
 }
 
 Animate* BreamActor::playDeathAnimation(){
@@ -376,7 +376,7 @@ bool MarlinsFishActor::init(){
 
 void MarlinsFishActor::activateFishMovement(){
 	
-    schedule(schedule_selector(FishActor::updateFishMovement), 2+rand()%3);
+    schedule(CC_SCHEDULE_SELECTOR(FishActor::updateFishMovement), 2+rand()%3);
 }
 
 Animate* MarlinsFishActor::playDeathAnimation(){
