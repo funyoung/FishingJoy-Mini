@@ -1,6 +1,7 @@
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,8 +23,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-#include "CCAutoreleasePool.h"
-#include "ccMacros.h"
+#include "base/CCAutoreleasePool.h"
+#include "base/ccMacros.h"
 
 NS_CC_BEGIN
 
@@ -65,11 +66,12 @@ void AutoreleasePool::clear()
 #if defined(COCOS2D_DEBUG) && (COCOS2D_DEBUG > 0)
     _isClearing = true;
 #endif
-    for (const auto &obj : _managedObjectArray)
+    std::vector<Ref*> releasings;
+    releasings.swap(_managedObjectArray);
+    for (const auto &obj : releasings)
     {
         obj->release();
     }
-    _managedObjectArray.clear();
 #if defined(COCOS2D_DEBUG) && (COCOS2D_DEBUG > 0)
     _isClearing = false;
 #endif
@@ -91,7 +93,6 @@ void AutoreleasePool::dump()
     CCLOG("%20s%20s%20s", "Object pointer", "Object id", "reference count");
     for (const auto &obj : _managedObjectArray)
     {
-        CC_UNUSED_PARAM(obj);
         CCLOG("%20p%20u\n", obj, obj->getReferenceCount());
     }
 }
@@ -109,10 +110,9 @@ PoolManager* PoolManager::getInstance()
 {
     if (s_singleInstance == nullptr)
     {
-        s_singleInstance = new PoolManager();
+        s_singleInstance = new (std::nothrow) PoolManager();
         // Add the first auto release pool
-        s_singleInstance->_curReleasePool = new AutoreleasePool("cocos2d autorelease pool");
-        s_singleInstance->_releasePoolStack.push_back(s_singleInstance->_curReleasePool);
+        new AutoreleasePool("cocos2d autorelease pool");
     }
     return s_singleInstance;
 }
@@ -125,6 +125,7 @@ void PoolManager::destroyInstance()
 
 PoolManager::PoolManager()
 {
+    _releasePoolStack.reserve(10);
 }
 
 PoolManager::~PoolManager()
@@ -134,7 +135,6 @@ PoolManager::~PoolManager()
     while (!_releasePoolStack.empty())
     {
         AutoreleasePool* pool = _releasePoolStack.back();
-        _releasePoolStack.pop_back();
         
         delete pool;
     }
@@ -143,7 +143,7 @@ PoolManager::~PoolManager()
 
 AutoreleasePool* PoolManager::getCurrentPool() const
 {
-    return _curReleasePool;
+    return _releasePoolStack.back();
 }
 
 bool PoolManager::isObjectInPools(Ref* obj) const
@@ -159,21 +159,12 @@ bool PoolManager::isObjectInPools(Ref* obj) const
 void PoolManager::push(AutoreleasePool *pool)
 {
     _releasePoolStack.push_back(pool);
-    _curReleasePool = pool;
 }
 
 void PoolManager::pop()
 {
-    // Can not pop the pool that created by engine
-    CC_ASSERT(_releasePoolStack.size() >= 1);
-    
+    CC_ASSERT(!_releasePoolStack.empty());
     _releasePoolStack.pop_back();
-    
-    // Should update _curReleasePool if a temple pool is released
-    if (_releasePoolStack.size() > 1)
-    {
-        _curReleasePool = _releasePoolStack.back();
-    }
 }
 
 NS_CC_END

@@ -1,7 +1,8 @@
 /****************************************************************************
 Copyright (C) 2010      Lam Pham
 Copyright (c) 2010-2012 cocos2d-x.org
-CopyRight (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
 http://www.cocos2d-x.org
 
@@ -23,8 +24,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-#include "CCActionProgressTimer.h"
-#include "CCProgressTimer.h"
+#include "2d/CCActionProgressTimer.h"
+#include "2d/CCProgressTimer.h"
 
 NS_CC_BEGIN
 
@@ -34,11 +35,15 @@ NS_CC_BEGIN
 
 ProgressTo* ProgressTo::create(float duration, float percent)
 {
-    ProgressTo *progressTo = new ProgressTo();
-    progressTo->initWithDuration(duration, percent);
-    progressTo->autorelease();
-
-    return progressTo;
+    ProgressTo *progressTo = new (std::nothrow) ProgressTo();
+    if (progressTo && progressTo->initWithDuration(duration, percent))
+    {
+        progressTo->autorelease();
+        return progressTo;
+    }
+    
+    delete progressTo;
+    return nullptr;
 }
 
 bool ProgressTo::initWithDuration(float duration, float percent)
@@ -55,30 +60,20 @@ bool ProgressTo::initWithDuration(float duration, float percent)
 
 ProgressTo* ProgressTo::clone() const
 {
-	// no copy constructor	
-	auto a = new ProgressTo();
-    a->initWithDuration(_duration, _to);
-	a->autorelease();
-	return a;
+    // no copy constructor
+    return ProgressTo::create(_duration, _to);
 }
 
 ProgressTo* ProgressTo::reverse() const
 {
-	CCASSERT(false, "reverse() not supported in ProgressTo");
-	return nullptr;
+    CCASSERT(false, "reverse() not supported in ProgressTo");
+    return nullptr;
 }
 
 void ProgressTo::startWithTarget(Node *target)
 {
     ActionInterval::startWithTarget(target);
     _from = ((kProgressTimerCast)(target))->getPercentage();
-
-    // XXX: Is this correct ?
-    // Adding it to support Repeat
-    if (_from == 100)
-    {
-        _from = 0;
-    }
 }
 
 void ProgressTo::update(float time)
@@ -90,11 +85,14 @@ void ProgressTo::update(float time)
 
 ProgressFromTo* ProgressFromTo::create(float duration, float fromPercentage, float toPercentage)
 {
-    ProgressFromTo *progressFromTo = new ProgressFromTo();
-    progressFromTo->initWithDuration(duration, fromPercentage, toPercentage);
-    progressFromTo->autorelease();
-
-    return progressFromTo;
+    ProgressFromTo *progressFromTo = new (std::nothrow) ProgressFromTo();
+    if (progressFromTo && progressFromTo->initWithDuration(duration, fromPercentage, toPercentage)) {
+        progressFromTo->autorelease();
+        return progressFromTo;
+    }
+    
+    delete progressFromTo;
+    return nullptr;
 }
 
 bool ProgressFromTo::initWithDuration(float duration, float fromPercentage, float toPercentage)
@@ -112,15 +110,12 @@ bool ProgressFromTo::initWithDuration(float duration, float fromPercentage, floa
 
 ProgressFromTo* ProgressFromTo::clone() const
 {
-	// no copy constructor	
-	auto a = new ProgressFromTo();
-	a->initWithDuration(_duration, _from, _to);
-	a->autorelease();
-	return a;
+    // no copy constructor
+    return ProgressFromTo::create(_duration, _from, _to);
 }
 
 
-ProgressFromTo* ProgressFromTo::reverse(void) const
+ProgressFromTo* ProgressFromTo::reverse() const
 {
     return ProgressFromTo::create(_duration, _to, _from);
 }
@@ -136,4 +131,3 @@ void ProgressFromTo::update(float time)
 }
 
 NS_CC_END
-

@@ -3,7 +3,8 @@ Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2009      Leonardo Kasperavičius
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2011      Zynga Inc.
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
 http://www.cocos2d-x.org
 
@@ -25,10 +26,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-#ifndef __CC_PARTICLE_SYSTEM_QUAD_H__
-#define __CC_PARTICLE_SYSTEM_QUAD_H__
+#pragma once
 
-#include  "CCParticleSystem.h"
+#include "2d/CCParticleSystem.h"
 #include "renderer/CCQuadCommand.h"
 
 NS_CC_BEGIN
@@ -37,37 +37,57 @@ class SpriteFrame;
 class EventCustom;
 
 /**
- * @addtogroup particle_nodes
+ * @addtogroup _2d
  * @{
  */
 
-/** @brief ParticleSystemQuad is a subclass of ParticleSystem
+/** @class ParticleSystemQuad
+ * @brief ParticleSystemQuad is a subclass of ParticleSystem.
 
 It includes all the features of ParticleSystem.
 
 Special features and Limitations:    
 - Particle size can be any float number.
-- The system can be scaled
-- The particles can be rotated
-- It supports subrects
-- It supports batched rendering since 1.1
+- The system can be scaled.
+- The particles can be rotated.
+- It supports subrects.
+- It supports batched rendering since 1.1.
 @since v0.8
+@js NA
 */
 class CC_DLL ParticleSystemQuad : public ParticleSystem
 {
 public:
 
-    /** creates a Particle Emitter */
+    /** Creates a Particle Emitter.
+     *
+     * @return An autoreleased ParticleSystemQuad object.
+     */
     static ParticleSystemQuad * create();
-    /** creates a Particle Emitter with a number of particles */
+    /** Creates a Particle Emitter with a number of particles.
+     *
+     * @param numberOfParticles A given number of particles.
+     * @return An autoreleased ParticleSystemQuad object.
+     */
     static ParticleSystemQuad * createWithTotalParticles(int numberOfParticles);
-    /** creates an initializes a ParticleSystemQuad from a plist file.
-     This plist files can be created manually or with Particle Designer:
+    /** Creates an initializes a ParticleSystemQuad from a plist file.
+     This plist files can be created manually or with Particle Designer.
+     *
+     * @param filename Particle plist file name.
+     * @return An autoreleased ParticleSystemQuad object.
      */
     static ParticleSystemQuad * create(const std::string& filename);
+    /** Creates a Particle Emitter with a dictionary.
+     * 
+     * @param dictionary Particle dictionary.
+     * @return An autoreleased ParticleSystemQuad object.
+     */
+    static ParticleSystemQuad * create(ValueMap &dictionary);
 
     /** Sets a new SpriteFrame as particle.
     WARNING: this method is experimental. Use setTextureWithRect instead.
+     *
+     * @param spriteFrame A given sprite frame as particle texture.
     @since v0.99.4
     */
     void setDisplayFrame(SpriteFrame *spriteFrame);
@@ -76,14 +96,19 @@ public:
      @since v0.99.4
      * @js NA
      * @lua NA
+     *
+     * @param texture A given texture.
+     8 @param rect A given rect, in points.
      */
     void setTextureWithRect(Texture2D *texture, const Rect& rect);
 
-    /** listen the event that coming to foreground on Android
+    /** Listen the event that renderer was recreated on Android/WP8.
      * @js NA
      * @lua NA
+     *
+     * @param event the event that renderer was recreated on Android/WP8.
      */
-    void listenBackToForeground(EventCustom* event);
+    void listenRendererRecreated(EventCustom* event);
 
     /**
      * @js NA
@@ -93,18 +118,13 @@ public:
     /**
      * @js NA
      * @lua NA
-     */
-    virtual void updateQuadWithParticle(tParticle* particle, const Point& newPosition) override;
+     */    
+    virtual void updateParticleQuads() override;
     /**
      * @js NA
      * @lua NA
      */
-    virtual void postStep() override;
-    /**
-     * @js NA
-     * @lua NA
-     */
-    virtual void draw(Renderer *renderer, const kmMat4 &transform, bool transformUpdated) override;
+    virtual void draw(Renderer *renderer, const Mat4 &transform, uint32_t flags) override;
 
     /**
      * @js NA
@@ -147,25 +167,20 @@ protected:
     /** Updates texture coords */
     void updateTexCoords();
 
-    void setupVBOandVAO();
-    void setupVBO();
     bool allocMemory();
 
-    V3F_C4B_T2F_Quad    *_quads;        // quads to be rendered
-    GLushort            *_indices;      // indices
-    GLuint              _VAOname;
-    GLuint              _buffersVBO[2]; //0: vertex  1: indices
+    V3F_C4B_T2F_Quad    *_quads = nullptr;        // quads to be rendered
+    unsigned short      *_indices = nullptr;      // indices
 
     QuadCommand _quadCommand;           // quad command
-
+    
+    backend::UniformLocation _mvpMatrixLocaiton;
+    backend::UniformLocation _textureLocation;    
 private:
     CC_DISALLOW_COPY_AND_ASSIGN(ParticleSystemQuad);
 };
 
-// end of particle_nodes group
+// end of _2d group
 /// @}
 
 NS_CC_END
-
-#endif //__CC_PARTICLE_SYSTEM_QUAD_H__
-

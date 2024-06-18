@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -26,50 +27,104 @@ THE SOFTWARE.
 #define __UILABELATLAS_H__
 
 #include "ui/UIWidget.h"
+#include "ui/GUIExport.h"
 
 NS_CC_BEGIN
+
+/**
+ * @addtogroup ui
+ * @{
+ */
+
+class Label;
+struct CC_DLL ResourceData;
 
 namespace ui {
     
 /**
- *   @js NA
- *   @lua NA
+ * @brief UI TextAtlas widget.
  */
-class TextAtlas : public Widget
+class CC_GUI_DLL TextAtlas : public Widget
 {
     
     DECLARE_CLASS_GUI_INFO
     
 public:
     /**
-     * Default constructor
+     * Default constructor.
+     *
+     * @lua new
      */
     TextAtlas();
     
     /**
-     * Default destructor
+     * Default destructor.
+     *
+     * @lua NA
      */
     virtual ~TextAtlas();
     
     /**
-     * Allocates and initializes.
+     * Create a TexAtlas object.
+     *
+     * @return An autoreleased TextAtlas object.
      */
     static TextAtlas* create();
     
-    /** initializes the LabelAtlas with a string, a char map file(the atlas), the width and height of each element and the starting char of the atlas */
-    void setProperty(const std::string& stringValue,const std::string& charMapFile, int itemWidth, int itemHeight, const std::string& startCharMap);
+    /**
+     * Create a LabelAtlas from a char map file.
+     *
+     * @param stringValue A given string needs to be displayed.
+     * @param charMapFile A given char map file name.
+     * @param itemWidth The element width.
+     * @param itemHeight The element height.
+     * @param startCharMap The starting char of the atlas.
+     * @return An autoreleased TextAtlas object.
+     */
+    static TextAtlas* create(const std::string& stringValue,
+                             const std::string& charMapFile,
+                             int itemWidth,
+                             int itemHeight,
+                             const std::string& startCharMap);
     
-    //set string value for labelatlas.
-    void setStringValue(const std::string& value);
+    /** Initializes the LabelAtlas with a string, a char map file(the atlas), the width and height of each element and the starting char of the atlas.
+     *
+     * @param stringValue A given string needs to be displayed.
+     * @param charMapFile A given char map file name.
+     * @param itemWidth The element width.
+     * @param itemHeight The element height.
+     * @param startCharMap The starting char of the atlas.
+     */
     
-    //get string value for labelatlas.
-    const std::string& getStringValue() const;
+    void setProperty(const std::string& stringValue,
+                     const std::string& charMapFile,
+                     int itemWidth,
+                     int itemHeight,
+                     const std::string& startCharMap);
     
-    //override "setAnchorPoint" method of widget.
-    virtual void setAnchorPoint(const Point &pt) override;
+    /**Set string value for labelatlas.
+     *
+     * @param value A given string needs to be displayed.
+     */
+    void setString(const std::string& value);
     
-    //override "getContentSize" method of widget.
-    virtual const Size& getContentSize() const override;
+    /**Get string value for labelatlas.
+     *
+     * @return The string value of TextAtlas.
+     */
+    const std::string& getString() const;
+    
+    /**
+     * Gets the string length of the label.
+     * Note: This length will be larger than the raw string length,
+     * if you want to get the raw string length, you should call this->getString().size() instead
+     *
+     * @return  string length.
+     */
+    ssize_t getStringLength()const;
+    
+    //override "getVirtualRendererSize" method of widget.
+    virtual Size getVirtualRendererSize() const override;
     
     //override "getVirtualRenderer" method of widget.
     virtual Node* getVirtualRenderer() override;
@@ -79,25 +134,35 @@ public:
      */
     virtual std::string getDescription() const override;
     
+    /**
+     * @js NA
+     */
+    virtual void adaptRenderers() override;
+
+    ResourceData getRenderFile();
+
 protected:
     virtual void initRenderer() override;
     virtual void onSizeChanged() override;
-    virtual void updateTextureColor() override;
-    virtual void updateTextureOpacity() override;
-    virtual void updateTextureRGBA() override;
+  
     void labelAtlasScaleChangedWithSize();
     virtual Widget* createCloneInstance() override;
     virtual void copySpecialProperties(Widget* model) override;
 protected:
-    LabelAtlas* _labelAtlasRenderer;
+    Label* _labelAtlasRenderer;
     std::string _stringValue;
     std::string _charMapFileName;
     int _itemWidth;
     int _itemHeight;
     std::string _startCharMap;
+    bool _labelAtlasRendererAdaptDirty;
 };
 
 }
+
+// end of ui group
+/// @}
+
 NS_CC_END
 
 #endif /* defined(__CocoGUI__LabelAtlas__) */

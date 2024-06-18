@@ -8,6 +8,8 @@
  * Modified by Yannick Loriot.
  * http://yannickloriot.com
  * 
+ * Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -37,6 +39,7 @@
 #include "CCControlUtils.h"
 #include "CCControlHuePicker.h"
 #include "CCControlSaturationBrightnessPicker.h"
+#include "extensions/ExtensionExport.h"
 
 NS_CC_EXT_BEGIN
 
@@ -47,12 +50,13 @@ NS_CC_EXT_BEGIN
  * @{
  */
 
-class ControlColourPicker: public Control
+class CC_EX_DLL ControlColourPicker: public Control
 {
 public:
     static ControlColourPicker* create();
     /**
      * @js ctor
+     * @lua new
      */
     ControlColourPicker();
     /**
@@ -63,8 +67,8 @@ public:
 
     virtual bool init() override;
 
-    virtual void setColor(const Color3B& colorValue);
-    virtual void setEnabled(bool bEnabled);
+    virtual void setColor(const Color3B& colorValue) override;
+    virtual void setEnabled(bool bEnabled) override;
 
     //virtual ~ControlColourPicker();
     void hueSliderValueChanged(Ref * sender, Control::EventType controlEvent);
@@ -73,7 +77,7 @@ public:
 protected:
     void updateControlPicker();
     void updateHueAndControlPicker();
-    virtual bool onTouchBegan(Touch* touch, Event* pEvent);
+    virtual bool onTouchBegan(Touch* touch, Event* pEvent) override;
 
     HSV _hsv;
     CC_SYNTHESIZE_RETAIN(ControlSaturationBrightnessPicker*, _colourPicker, colourPicker)

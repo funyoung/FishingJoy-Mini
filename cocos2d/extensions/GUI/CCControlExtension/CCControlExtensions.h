@@ -1,5 +1,6 @@
 /****************************************************************************
 Copyright (c) 2012 cocos2d-x.org
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -25,7 +26,6 @@ THE SOFTWARE.
 #ifndef __CCCONTROL_EXTENSIONS_H__
 #define __CCCONTROL_EXTENSIONS_H__
 
-#include "CCScale9Sprite.h"
 #include "CCControl.h"
 #include "CCControlButton.h"
 #include "CCControlColourPicker.h"

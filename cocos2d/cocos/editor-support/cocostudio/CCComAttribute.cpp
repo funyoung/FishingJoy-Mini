@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,19 +23,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "cocostudio/CCComAttribute.h"
+#include "editor-support/cocostudio/CCComAttribute.h"
+#include "platform/CCFileUtils.h"
 
 using namespace cocos2d;
 
 namespace cocostudio {
 
 IMPLEMENT_CLASS_COMPONENT_INFO(ComAttribute)
-ComAttribute::ComAttribute(void)
+
+const std::string ComAttribute::COMPONENT_NAME = "CCComAttribute";
+
+ComAttribute::ComAttribute()
 {
-    _name = "CCComAttribute";
+    _name = COMPONENT_NAME;
 }
 
-ComAttribute::~ComAttribute(void)
+ComAttribute::~ComAttribute()
 {
     _dict.clear();
 }
@@ -127,9 +132,9 @@ std::string ComAttribute::getString(const std::string& key, const std::string& d
     return DICTOOL->getStringValue_json(_doc, key.c_str());
 }
 
-ComAttribute* ComAttribute::create(void)
+ComAttribute* ComAttribute::create()
 {
-	ComAttribute * pRet = new ComAttribute();
+	ComAttribute * pRet = new (std::nothrow) ComAttribute();
 	if (pRet && pRet->init())
 	{
 		pRet->autorelease();
@@ -143,14 +148,43 @@ ComAttribute* ComAttribute::create(void)
 
 bool ComAttribute::serialize(void* r) 
 {
-    bool bRet = false;
-	do 
+    bool ret = false;
+	do
 	{
 		CC_BREAK_IF(r == nullptr);
-		rapidjson::Value *v = (rapidjson::Value *)r;
-		const char *className = DICTOOL->getStringValue_json(*v, "classname");
-		CC_BREAK_IF(className == nullptr);
-		const char *comName = DICTOOL->getStringValue_json(*v, "name");
+		SerData *serData = (SerData *)(r);
+		const rapidjson::Value *v = serData->_rData;
+		stExpCocoNode *cocoNode = serData->_cocoNode;
+        CocoLoader *cocoLoader = serData->_cocoLoader;
+		const char *className = nullptr;
+		const char *comName = nullptr;
+		const char *file = nullptr;
+		std::string filePath;
+		int resType = 0;
+		if (v != nullptr)
+		{
+			className = DICTOOL->getStringValue_json(*v, "classname");
+			CC_BREAK_IF(className == nullptr);
+			comName = DICTOOL->getStringValue_json(*v, "name");
+			const rapidjson::Value &fileData = DICTOOL->getSubDictionary_json(*v, "fileData");
+			CC_BREAK_IF(!DICTOOL->checkObjectExist_json(fileData));
+			file = DICTOOL->getStringValue_json(fileData, "path");
+			CC_BREAK_IF(file == nullptr);
+			resType = DICTOOL->getIntValue_json(fileData, "resourceType", -1);
+			CC_BREAK_IF(resType != 0);
+		}
+		else if (cocoNode != nullptr)
+		{
+			className = cocoNode[1].GetValue(cocoLoader);
+			CC_BREAK_IF(className == nullptr);
+			comName = cocoNode[2].GetValue(cocoLoader);
+			stExpCocoNode *fileData = cocoNode[3].GetChildArray(cocoLoader);
+			CC_BREAK_IF(!fileData);
+			file = fileData[0].GetValue(cocoLoader);
+			CC_BREAK_IF(file == nullptr);
+			resType = atoi(fileData[2].GetValue(cocoLoader));
+			CC_BREAK_IF(resType != 0);
+		}
 		if (comName != nullptr)
 		{
 			setName(comName);
@@ -159,22 +193,17 @@ bool ComAttribute::serialize(void* r)
 		{
 			setName(className);
 		}
-		const rapidjson::Value &fileData = DICTOOL->getSubDictionary_json(*v, "fileData");
-		CC_BREAK_IF(!DICTOOL->checkObjectExist_json(fileData));
-		const char *file = DICTOOL->getStringValue_json(fileData, "path");
-		CC_BREAK_IF(file == nullptr);
-		std::string filePath;
 		if (file != nullptr)
 		{
-			filePath.assign(cocos2d::CCFileUtils::getInstance()->fullPathForFilename(file));
+			filePath.assign(cocos2d::FileUtils::getInstance()->fullPathForFilename(file));
 		}
-		int resType = DICTOOL->getIntValue_json(fileData, "resourceType", -1);
-		CC_BREAK_IF(resType != 0);
-        parse(filePath.c_str());
-		bRet = true;
-	} while (0);
-
-	return bRet;
+		if (parse(filePath))
+		{
+            ret = true;
+		}
+        
+	}while (0);
+	return ret;
 }
 
 bool ComAttribute::parse(const std::string &jsonFile)

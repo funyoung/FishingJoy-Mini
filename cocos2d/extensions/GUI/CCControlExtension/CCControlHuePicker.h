@@ -8,6 +8,8 @@
  * Modified by Yannick Loriot.
  * http://yannickloriot.com
  * 
+ * Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -35,6 +37,7 @@
 
 #include "CCControl.h"
 #include "CCInvocation.h"
+#include "extensions/ExtensionExport.h"
 
 NS_CC_EXT_BEGIN
 
@@ -45,10 +48,10 @@ NS_CC_EXT_BEGIN
  * @{
  */
 
-class ControlHuePicker : public Control
+class CC_EX_DLL ControlHuePicker : public Control
 {
 public:
-    static ControlHuePicker* create(Node* target, Point pos);
+    static ControlHuePicker* create(Node* target, Vec2 pos);
     /**
      * @js ctor
      */
@@ -58,19 +61,19 @@ public:
      * @lua NA
      */
     virtual ~ControlHuePicker();
-    virtual bool initWithTargetAndPos(Node* target, Point pos);
+    virtual bool initWithTargetAndPos(Node* target, Vec2 pos);
 
-    virtual void setEnabled(bool enabled);
+    virtual void setEnabled(bool enabled) override;
 
     // overrides
     virtual bool onTouchBegan(Touch* touch, Event* pEvent) override;
     virtual void onTouchMoved(Touch *pTouch, Event *pEvent) override;
 
 protected:
-    void updateSliderPosition(Point location);
-    bool checkSliderPosition(Point location);
+    void updateSliderPosition(Vec2 location);
+    bool checkSliderPosition(Vec2 location);
 
-    //maunally put in the setters
+    //manually put in the setters
     CC_SYNTHESIZE_READONLY(float, _hue, Hue);
     virtual void setHue(float val);
     CC_SYNTHESIZE_READONLY(float, _huePercentage, HuePercentage);
@@ -79,7 +82,7 @@ protected:
     //not sure if these need to be there actually. I suppose someone might want to access the sprite?
     CC_SYNTHESIZE_RETAIN(Sprite*, _background, Background);
     CC_SYNTHESIZE_RETAIN(Sprite*, _slider, Slider);
-    CC_SYNTHESIZE_READONLY(Point, _startPos, StartPos);
+    CC_SYNTHESIZE_READONLY(Vec2, _startPos, StartPos);
 };
 
 // end of GUI group

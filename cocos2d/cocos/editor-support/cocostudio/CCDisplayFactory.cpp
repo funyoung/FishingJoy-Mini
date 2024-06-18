@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,15 +23,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "cocostudio/CCDisplayFactory.h"
-#include "cocostudio/CCBone.h"
-#include "cocostudio/CCArmature.h"
-#include "cocostudio/CCSkin.h"
-#include "cocostudio/CCSpriteFrameCacheHelper.h"
-#include "cocostudio/CCArmatureDataManager.h"
-#include "cocostudio/CCTransformHelp.h"
+#include "editor-support/cocostudio/CCDisplayFactory.h"
+#include "editor-support/cocostudio/CCBone.h"
+#include "editor-support/cocostudio/CCArmature.h"
+#include "editor-support/cocostudio/CCSkin.h"
+#include "editor-support/cocostudio/CCArmatureDataManager.h"
+#include "editor-support/cocostudio/CCTransformHelp.h"
 
-#include "CCParticleSystemQuad.h"
+#include "2d/CCParticleSystemQuad.h"
 
 using namespace cocos2d;
 
@@ -93,7 +93,7 @@ void DisplayFactory::updateDisplay(Bone *bone, float dt, bool dirty)
         break;
     default:
     {
-        kmMat4 transform = bone->getNodeToArmatureTransform();
+        Mat4 transform = bone->getNodeToArmatureTransform();
         display->setAdditionalTransform(&transform);
     }
     break;
@@ -113,12 +113,12 @@ void DisplayFactory::updateDisplay(Bone *bone, float dt, bool dirty)
                 CC_BREAK_IF(!detector->getBody());
 #endif
 
-                kmMat4 displayTransform = display->getNodeToParentTransform();
-                Point anchorPoint =  display->getAnchorPointInPoints();
+                Mat4 displayTransform = display->getNodeToParentTransform();
+                Vec2 anchorPoint =  display->getAnchorPointInPoints();
                 anchorPoint = PointApplyTransform(anchorPoint, displayTransform);
-                displayTransform.mat[12] = anchorPoint.x;
-                displayTransform.mat[13] = anchorPoint.y;
-                kmMat4 t = TransformConcat( bone->getArmature()->getNodeToParentTransform(),displayTransform);
+                displayTransform.m[12] = anchorPoint.x;
+                displayTransform.m[13] = anchorPoint.y;
+                Mat4 t = TransformConcat( bone->getArmature()->getNodeToParentTransform(),displayTransform);
                 detector->updateTransform(t);
             }
             while (0);
@@ -144,7 +144,7 @@ void DisplayFactory::createSpriteDisplay(Bone *bone, DecorativeDisplay *decoDisp
     SpriteDisplayData *displayData = (SpriteDisplayData *)decoDisplay->getDisplayData();
 
     std::string textureName = displayData->displayName;
-    size_t startPos = textureName.find_last_of(".");
+    size_t startPos = textureName.find_last_of('.');
 
     if(startPos != std::string::npos)
     {
@@ -152,13 +152,13 @@ void DisplayFactory::createSpriteDisplay(Bone *bone, DecorativeDisplay *decoDisp
     }
 
     //! create display
-    if(textureName.length() == 0)
+    if(textureName.empty())
     {
         skin = Skin::create();
     }
     else
     {
-        skin = Skin::createWithSpriteFrameName((textureName + ".png").c_str());
+        skin = Skin::createWithSpriteFrameName((textureName + ".png"));
     }
 
     decoDisplay->setDisplay(skin);
@@ -191,18 +191,18 @@ void DisplayFactory::initSpriteDisplay(Bone *bone, DecorativeDisplay *decoDispla
 {
     //! remove .xxx
     std::string textureName = displayName;
-    size_t startPos = textureName.find_last_of(".");
+    size_t startPos = textureName.find_last_of('.');
 
     if(startPos != std::string::npos)
     {
         textureName = textureName.erase(startPos);
     }
 
-    TextureData *textureData = ArmatureDataManager::getInstance()->getTextureData(textureName.c_str());
+    TextureData *textureData = ArmatureDataManager::getInstance()->getTextureData(textureName);
     if(textureData)
     {
         //! Init display anchorPoint, every Texture have a anchor point
-        skin->setAnchorPoint(Point( textureData->pivotX, textureData->pivotY));
+        skin->setAnchorPoint(Vec2( textureData->pivotX, textureData->pivotY));
     }
 
 
@@ -233,11 +233,11 @@ void DisplayFactory::createArmatureDisplay(Bone *bone, DecorativeDisplay *decoDi
 {
     ArmatureDisplayData *displayData = (ArmatureDisplayData *)decoDisplay->getDisplayData();
 
-    Armature *armature = Armature::create(displayData->displayName.c_str(), bone);
+    Armature *armature = Armature::create(displayData->displayName, bone);
 
     decoDisplay->setDisplay(armature);
 }
-void DisplayFactory::updateArmatureDisplay(Bone *bone, Node *display, float dt)
+void DisplayFactory::updateArmatureDisplay(Bone* /*bone*/, Node *display, float dt)
 {
     Armature *armature = (Armature *)display;
     if(armature)
@@ -260,7 +260,7 @@ void DisplayFactory::addParticleDisplay(Bone *bone, DecorativeDisplay *decoDispl
 void DisplayFactory::createParticleDisplay(Bone *bone, DecorativeDisplay *decoDisplay)
 {
     ParticleDisplayData *displayData = (ParticleDisplayData *)decoDisplay->getDisplayData();
-    ParticleSystem *system = ParticleSystemQuad::create(displayData->displayName.c_str());
+    ParticleSystem *system = ParticleSystemQuad::create(displayData->displayName);
 
     system->removeFromParent();
     system->cleanup();

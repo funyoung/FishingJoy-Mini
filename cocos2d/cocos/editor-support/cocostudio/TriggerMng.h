@@ -1,5 +1,6 @@
-/****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+﻿/****************************************************************************
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -24,8 +25,7 @@ THE SOFTWARE.
 #ifndef __TRIGGERMNG_H__
 #define __TRIGGERMNG_H__
 
-#include "cocos2d.h"
-#include "CocoStudio.h"
+#include "editor-support/cocostudio/CocoStudio.h"
 
 namespace cocos2d {
 class EventDispatcher;
@@ -36,11 +36,11 @@ namespace cocostudio {
 
 class TriggerObj;
 
-class ArmatureMovementDispatcher : public cocos2d::Ref
+class CC_STUDIO_DLL ArmatureMovementDispatcher : public cocos2d::Ref
 {
 public:
-	ArmatureMovementDispatcher(void);
-	~ArmatureMovementDispatcher(void);
+	ArmatureMovementDispatcher();
+	~ArmatureMovementDispatcher();
 public:
 	void addAnimationEventCallBack(cocos2d::Ref*pTarget, SEL_MovementEventCallFunc mecf);
 	void removeAnnimationEventCallBack(cocos2d::Ref*pTarget, SEL_MovementEventCallFunc mecf);
@@ -51,11 +51,11 @@ private:
 
 };
 
-class TriggerMng
+class CC_STUDIO_DLL TriggerMng
 {
 public:
-    TriggerMng(void);
-    virtual ~TriggerMng(void);
+    TriggerMng();
+    virtual ~TriggerMng();
 
 public:
     static TriggerMng* getInstance();
@@ -64,12 +64,13 @@ public:
     
 public:
     void parse(const rapidjson::Value &root);
-    void removeAll(void);
+    void parse(cocostudio::CocoLoader *pCocoLoader, cocostudio::stExpCocoNode *pCocoNode);
+    void removeAll();
     cocos2d::Vector<TriggerObj*>* get(unsigned int event) const;
     TriggerObj* getTriggerObj(unsigned int id) const;
     bool removeTriggerObj(TriggerObj *Obj);
     bool removeTriggerObj(unsigned int id);
-    bool isEmpty(void) const;
+    bool isEmpty() const;
 
     void addArmatureMovementCallBack(Armature *pAr, cocos2d::Ref *pTarget, SEL_MovementEventCallFunc mecf);
     void removeArmatureMovementCallBack(Armature *pAr, cocos2d::Ref *pTarget, SEL_MovementEventCallFunc mecf);
@@ -78,6 +79,8 @@ public:
     void dispatchEvent(cocos2d::EventCustom* tEvent);
     void removeEventListener(cocos2d::EventListener* listener);
     void addEventListenerWithFixedPriority(cocos2d::EventListener* listener, int fixedPriority);
+private:
+    void buildJson(rapidjson::Document &document, cocostudio::CocoLoader *pCocoLoader, cocostudio::stExpCocoNode *pCocoNode);
 
 private:
     static TriggerMng *_sharedTriggerMng;

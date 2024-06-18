@@ -1,6 +1,7 @@
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
-Copyright (c) 2013-2014 Chukong Technologies
+Copyright (c) 2013-2017 Chukong Technologies
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,11 +23,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-#include "CCNS.h"
+#include "base/CCNS.h"
 #include <string>
 #include <vector>
 #include <string.h>
 #include <stdlib.h>
+
+#include "base/ccUtils.h"
 
 using namespace std;
 
@@ -129,14 +132,14 @@ Rect RectFromString(const std::string& str)
 
         // split the string with ','
         strArray pointInfo;
-        CC_BREAK_IF(!splitWithForm(pointStr.c_str(), pointInfo));
+        CC_BREAK_IF(!splitWithForm(pointStr, pointInfo));
         strArray sizeInfo;
-        CC_BREAK_IF(!splitWithForm(sizeStr.c_str(), sizeInfo));
+        CC_BREAK_IF(!splitWithForm(sizeStr, sizeInfo));
 
-        float x = (float) atof(pointInfo[0].c_str());
-        float y = (float) atof(pointInfo[1].c_str());
-        float width  = (float) atof(sizeInfo[0].c_str());
-        float height = (float) atof(sizeInfo[1].c_str());
+        float x = (float) utils::atof(pointInfo[0].c_str());
+        float y = (float) utils::atof(pointInfo[1].c_str());
+        float width  = (float) utils::atof(sizeInfo[0].c_str());
+        float height = (float) utils::atof(sizeInfo[1].c_str());
 
         result = Rect(x, y, width, height);
     } while (0);
@@ -144,19 +147,19 @@ Rect RectFromString(const std::string& str)
     return result;
 }
 
-Point PointFromString(const std::string& str)
+Vec2 PointFromString(const std::string& str)
 {
-    Point ret = Point::ZERO;
+    Vec2 ret;
 
     do 
     {
         strArray strs;
         CC_BREAK_IF(!splitWithForm(str, strs));
 
-        float x = (float) atof(strs[0].c_str());
-        float y = (float) atof(strs[1].c_str());
+        float x = (float) utils::atof(strs[0].c_str());
+        float y = (float) utils::atof(strs[1].c_str());
 
-        ret = Point(x, y);
+        ret.set(x, y);
     } while (0);
 
     return ret;
@@ -171,8 +174,8 @@ Size SizeFromString(const std::string& pszContent)
         strArray strs;
         CC_BREAK_IF(!splitWithForm(pszContent, strs));
 
-        float width  = (float) atof(strs[0].c_str());
-        float height = (float) atof(strs[1].c_str());
+        float width  = (float) utils::atof(strs[0].c_str());
+        float height = (float) utils::atof(strs[1].c_str());
 
         ret = Size(width, height);
     } while (0);

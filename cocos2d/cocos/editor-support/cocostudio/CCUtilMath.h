@@ -1,5 +1,6 @@
-/****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+﻿/****************************************************************************
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -25,8 +26,9 @@ THE SOFTWARE.
 #ifndef __CCUTILMATH_H__
 #define __CCUTILMATH_H__
 
-#include "CCSprite.h"
-#include "cocostudio/CCArmatureDefine.h"
+#include "2d/CCSprite.h"
+#include "editor-support/cocostudio/CCArmatureDefine.h"
+#include "editor-support/cocostudio/CocosStudioExport.h"
 #include <math.h>
 
 namespace cocostudio {
@@ -37,18 +39,18 @@ namespace cocostudio {
 
 
 //! hit test function
-bool isSpriteContainPoint(cocos2d::Sprite *sprite, cocos2d::Point point);
-bool isSpriteContainPoint(cocos2d::Sprite *sprite, cocos2d::Point point, cocos2d::Point &outPoint);
+bool CC_STUDIO_DLL isSpriteContainPoint(cocos2d::Sprite *sprite, cocos2d::Vec2 point);
+bool CC_STUDIO_DLL isSpriteContainPoint(cocos2d::Sprite *sprite, cocos2d::Vec2 point, cocos2d::Vec2 &outPoint);
 
 #define CC_SPRITE_CONTAIN_POINT(sprite, point) isSpriteContainPoint((sprite), (point))
 #define CC_SPRITE_CONTAIN_POINT_WITH_RETURN(sprite, point, outPoint) isSpriteContainPoint((sprite), (point), outPoint)
 
 
 //! motion curve function
-cocos2d::Point bezierTo(float t, cocos2d::Point &point1, cocos2d::Point &point2, cocos2d::Point &point3);
-cocos2d::Point bezierTo(float t, cocos2d::Point &point1, cocos2d::Point &point2, cocos2d::Point &point3, cocos2d::Point &point4);
+cocos2d::Vec2 CC_STUDIO_DLL bezierTo(float t, cocos2d::Vec2 &point1, cocos2d::Vec2 &point2, cocos2d::Vec2 &point3);
+cocos2d::Vec2 CC_STUDIO_DLL bezierTo(float t, cocos2d::Vec2 &point1, cocos2d::Vec2 &point2, cocos2d::Vec2 &point3, cocos2d::Vec2 &point4);
 
-cocos2d::Point circleTo(float t, cocos2d::Point &center, float radius, float fromRadian, float radianDif);
+cocos2d::Vec2 CC_STUDIO_DLL circleTo(float t, cocos2d::Vec2 &center, float radius, float fromRadian, float radianDif);
 
 
 }

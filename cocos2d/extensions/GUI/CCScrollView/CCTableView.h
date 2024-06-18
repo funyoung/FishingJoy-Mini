@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (c) 2012 cocos2d-x.org
  Copyright (c) 2010 Sangwoo Im
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos2d-x.org
 
@@ -28,10 +29,15 @@
 
 #include "CCScrollView.h"
 #include "CCTableViewCell.h"
+#include "extensions/ExtensionExport.h"
 
 #include <set>
 #include <vector>
 
+/**
+ * @addtogroup ui
+ * @{
+ */
 NS_CC_EXT_BEGIN
 
 class TableView;
@@ -39,7 +45,7 @@ class TableView;
 /**
  * Sole purpose of this delegate is to single touch event in this version.
  */
-class TableViewDelegate : public ScrollViewDelegate
+class CC_EX_DLL TableViewDelegate : public ScrollViewDelegate
 {
 public:
     /**
@@ -60,7 +66,7 @@ public:
      * @js NA
      * @lua NA
      */
-    virtual void tableCellHighlight(TableView* table, TableViewCell* cell){};
+    virtual void tableCellHighlight(TableView* table, TableViewCell* cell);
 
     /**
      * Delegate to respond a table cell release event
@@ -70,7 +76,7 @@ public:
      * @js NA
      * @lua NA
      */
-    virtual void tableCellUnhighlight(TableView* table, TableViewCell* cell){};
+    virtual void tableCellUnhighlight(TableView* table, TableViewCell* cell);
 
     /**
      * Delegate called when the cell is about to be recycled. Immediately
@@ -82,7 +88,7 @@ public:
      * @js NA
      * @lua NA
      */
-    virtual void tableCellWillRecycle(TableView* table, TableViewCell* cell){};
+    virtual void tableCellWillRecycle(TableView* table, TableViewCell* cell);
 
 };
 
@@ -90,7 +96,7 @@ public:
 /**
  * Data source that governs table backend data.
  */
-class TableViewDataSource
+class CC_EX_DLL TableViewDataSource
 {
 public:
     /**
@@ -105,18 +111,14 @@ public:
      * @param idx the index of a cell to get a size
      * @return size of a cell at given index
      */
-    virtual Size tableCellSizeForIndex(TableView *table, ssize_t idx) {
-        return cellSizeForTable(table);
-    };
+    virtual Size tableCellSizeForIndex(TableView* table, ssize_t idx);
     /**
      * cell height for a given table.
      *
      * @param table table to hold the instances of Class
      * @return cell size
      */
-    virtual Size cellSizeForTable(TableView *table) {
-        return Size::ZERO;
-    };
+    virtual Size cellSizeForTable(TableView* table);
     /**
      * a cell instance at a given index
      *
@@ -139,7 +141,7 @@ public:
  *
  * This is a very basic, minimal implementation to bring UITableView-like component into cocos2d world.
  */
-class TableView : public ScrollView, public ScrollViewDelegate
+class CC_EX_DLL TableView : public ScrollView, public ScrollViewDelegate
 {
 public:
     
@@ -149,11 +151,11 @@ public:
         BOTTOM_UP
     };
     
-    /** Empty contructor of TableView */
+    /** Empty constructor of TableView */
     static TableView* create();
     
     /**
-     * An intialized table view object
+     * An initialized table view object
      *
      * @param dataSource data source
      * @param size view size
@@ -183,6 +185,7 @@ public:
     static TableView* create(TableViewDataSource* dataSource, Size size, Node *container);
     /**
      * @js ctor
+     * @lua new
      */
     TableView();
     /**
@@ -200,6 +203,7 @@ public:
      */
     TableViewDataSource* getDataSource() { return _dataSource; }
     /**
+     * @code
      * when this function bound to js or lua,the input params are changed
      * in js:var setDataSource(var jsSource)
      * in lua:local setDataSource()
@@ -273,10 +277,10 @@ public:
     virtual void onTouchCancelled(Touch *pTouch, Event *pEvent) override;
 
 protected:
-    long __indexFromOffset(Point offset);
-    long _indexFromOffset(Point offset);
-    Point __offsetFromIndex(ssize_t index);
-    Point _offsetFromIndex(ssize_t index);
+    long __indexFromOffset(Vec2 offset);
+    long _indexFromOffset(Vec2 offset);
+    Vec2 __offsetFromIndex(ssize_t index);
+    Vec2 _offsetFromIndex(ssize_t index);
 
     void _moveCellOutOfSight(TableViewCell *cell);
     void _setIndexForCell(ssize_t index, TableViewCell *cell);
@@ -327,7 +331,8 @@ public:
 
 };
 
-
 NS_CC_EXT_END
+// end of ui group
+/// @}
 
 #endif /* __CCTABLEVIEW_H__ */

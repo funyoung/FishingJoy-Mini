@@ -1,41 +1,50 @@
-if(WIN32)
-  set(PLATFORM_SRC
-    WebSocket.cpp
-  )
-
-  set(PLATFORM_LINK
-    websockets
-  )
-elseif(NOT APPLE)
-  set(PLATFORM_SRC
-    WebSocket.cpp
-  )
-
-  set(PLATFORM_LINK
-    websockets
-    ssl
-    crypto
-  )
+if(ANDROID)
+    set(COCOS_NETWORK_HEADER
+        network/CCDownloader-android.h
+        )
+    set(COCOS_NETWORK_SRC
+        network/HttpClient-android.cpp
+        network/SocketIO.cpp
+        network/WebSocket.cpp
+        network/CCDownloader.cpp
+        network/CCDownloader-android.cpp
+        network/Uri.cpp
+        )
+elseif(APPLE)
+    set(COCOS_NETWORK_HEADER
+        network/CCDownloader-apple.h
+        network/HttpAsynConnection-apple.h
+        )
+    set(COCOS_NETWORK_SRC
+        network/CCDownloader-apple.mm
+        network/HttpClient.cpp
+        network/SocketIO.cpp
+        network/WebSocket.cpp
+        network/CCDownloader.cpp
+        network/CCDownloader-curl.cpp
+        network/Uri.cpp
+        )
+else()
+    set(COCOS_NETWORK_SRC
+        network/HttpClient.cpp
+        network/SocketIO.cpp
+        network/WebSocket.cpp
+        network/CCDownloader.cpp
+        network/CCDownloader-curl.cpp
+        network/Uri.cpp
+        )
 endif()
 
-set(NETWORK_SRC
-  HttpClient.cpp
-  SocketIO.cpp
-  ${PLATFORM_SRC}
-)
-
-add_library(network STATIC
-  ${NETWORK_SRC}
-)
-
-target_link_libraries(network
-  curl
-  ${PLATFORM_LINK}
-)
-
-set_target_properties(network
-    PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-)
-
+set(COCOS_NETWORK_HEADER
+    ${COCOS_NETWORK_HEADER}
+    network/CCDownloader-curl.h
+    network/CCIDownloaderImpl.h
+    network/CCDownloader.h
+    network/WebSocket.h
+    network/Uri.h
+    network/SocketIO.h
+    network/HttpClient.h
+    network/HttpResponse.h
+    network/HttpRequest.h
+    network/HttpCookie.h
+    )

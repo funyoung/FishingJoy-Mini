@@ -1,5 +1,6 @@
 /****************************************************************************
 Copyright (c) 2012 cocos2d-x.org
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -26,12 +27,12 @@ THE SOFTWARE.
 
 NS_CC_EXT_BEGIN
 
-Sprite* ControlUtils::addSpriteToTargetWithPosAndAnchor(const char* spriteName, Node * target, Point pos, Point anchor)
+Sprite* ControlUtils::addSpriteToTargetWithPosAndAnchor(const char* spriteName, Node * target, Vec2 pos, Vec2 anchor)
 {
     Sprite *sprite =Sprite::createWithSpriteFrameName(spriteName);
     
     if (!sprite)
-        return NULL;
+        return nullptr;
 
     sprite->setPosition(pos);
     sprite->setAnchorPoint(anchor);
@@ -92,7 +93,7 @@ RGBA ControlUtils::RGBfromHSV(HSV value)
     
     if (value.s <= 0.0) // < is bogus, just shuts up warnings
     {       
-        if (isnan(value.h)) // value.h == NAN
+        if (std::isnan(value.h)) // value.h == NAN
         {   
             out.r = value.v;
             out.g = value.v;
@@ -163,7 +164,7 @@ Rect ControlUtils::RectUnion(const Rect& src1, const Rect& src2)
     float x2 = MAX(src1.getMaxX(), src2.getMaxX());
     float y2 = MAX(src1.getMaxY(), src2.getMaxY());
     
-    result.origin=Point(x1,y1);
+    result.origin=Vec2(x1,y1);
     result.size=Size(x2-x1, y2-y1);
     return result;
 }

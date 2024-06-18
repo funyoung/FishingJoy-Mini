@@ -2,7 +2,8 @@
 Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2011      Zynga Inc.
-CopyRight (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
 http://www.cocos2d-x.org
 
@@ -24,18 +25,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-#include "CCAnimation.h"
-#include "CCTextureCache.h"
-#include "CCTexture2D.h"
-#include "ccMacros.h"
-#include "CCSpriteFrame.h"
-#include "CCDirector.h"
+#include "2d/CCAnimation.h"
+#include "renderer/CCTextureCache.h"
+#include "renderer/CCTexture2D.h"
+#include "base/CCDirector.h"
 
 NS_CC_BEGIN
 
 AnimationFrame* AnimationFrame::create(SpriteFrame* spriteFrame, float delayUnits, const ValueMap& userInfo)
 {
-    auto ret = new AnimationFrame();
+    auto ret = new (std::nothrow) AnimationFrame();
     if (ret && ret->initWithSpriteFrame(spriteFrame, delayUnits, userInfo))
     {
         ret->autorelease();
@@ -72,31 +71,31 @@ AnimationFrame::~AnimationFrame()
 
 AnimationFrame* AnimationFrame::clone() const
 {
-	// no copy constructor
-	auto frame = new AnimationFrame();
+    // no copy constructor
+    auto frame = new (std::nothrow) AnimationFrame();
     frame->initWithSpriteFrame(_spriteFrame->clone(),
-							   _delayUnits,
-							   _userInfo);
+                               _delayUnits,
+                               _userInfo);
 
-	frame->autorelease();
-	return frame;
+    frame->autorelease();
+    return frame;
 }
 
 // implementation of Animation
 
-Animation* Animation::create(void)
+Animation* Animation::create()
 {
-    Animation *animation = new Animation();
+    Animation *animation = new (std::nothrow) Animation();
     animation->init();
     animation->autorelease();
 
     return animation;
 } 
 
-Animation* Animation::createWithSpriteFrames(const Vector<SpriteFrame*>& frames, float delay/* = 0.0f*/)
+Animation* Animation::createWithSpriteFrames(const Vector<SpriteFrame*>& frames, float delay/* = 0.0f*/, unsigned int loops/* = 1*/)
 {
-    Animation *animation = new Animation();
-    animation->initWithSpriteFrames(frames, delay);
+    Animation *animation = new (std::nothrow) Animation();
+    animation->initWithSpriteFrames(frames, delay, loops);
     animation->autorelease();
 
     return animation;
@@ -104,7 +103,7 @@ Animation* Animation::createWithSpriteFrames(const Vector<SpriteFrame*>& frames,
 
 Animation* Animation::create(const Vector<AnimationFrame*>& arrayOfAnimationFrameNames, float delayPerUnit, unsigned int loops /* = 1 */)
 {
-    Animation *animation = new Animation();
+    Animation *animation = new (std::nothrow) Animation();
     animation->initWithAnimationFrames(arrayOfAnimationFrameNames, delayPerUnit, loops);
     animation->autorelease();
     return animation;
@@ -118,10 +117,10 @@ bool Animation::init()
     return true;
 }
 
-bool Animation::initWithSpriteFrames(const Vector<SpriteFrame*>& frames, float delay/* = 0.0f*/)
+bool Animation::initWithSpriteFrames(const Vector<SpriteFrame*>& frames, float delay/* = 0.0f*/, unsigned int loops/* = 1*/)
 {
-    _loops = 1;
     _delayPerUnit = delay;
+    _loops = loops;
 
     for (auto& spriteFrame : frames)
     {
@@ -157,7 +156,7 @@ Animation::Animation()
 
 }
 
-Animation::~Animation(void)
+Animation::~Animation()
 {
     CCLOGINFO("deallocing Animation: %p", this);
 }
@@ -186,19 +185,19 @@ void Animation::addSpriteFrameWithTexture(Texture2D *pobTexture, const Rect& rec
     addSpriteFrame(frame);
 }
 
-float Animation::getDuration(void) const
+float Animation::getDuration() const
 {
     return _totalDelayUnits * _delayPerUnit;
 }
 
 Animation* Animation::clone() const
 {
-	// no copy constructor	
-	auto a = new Animation();
+    // no copy constructor    
+    auto a = new (std::nothrow) Animation();
     a->initWithAnimationFrames(_frames, _delayPerUnit, _loops);
     a->setRestoreOriginalFrame(_restoreOriginalFrame);
-	a->autorelease();
-	return a;
+    a->autorelease();
+    return a;
 }
 
 NS_CC_END

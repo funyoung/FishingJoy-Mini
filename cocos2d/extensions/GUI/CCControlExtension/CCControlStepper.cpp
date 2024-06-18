@@ -5,6 +5,8 @@
  * Copyright 2012 Yannick Loriot. All rights reserved.
  * http://yannickloriot.com
  * 
+ * Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -49,17 +51,17 @@ ControlStepper::ControlStepper()
 , _touchInsideFlag(false)
 , _touchedPart(Part::NONE)
 , _autorepeatCount(0)
-, _minusSprite(NULL)
-, _plusSprite(NULL)
-, _minusLabel(NULL)
-, _plusLabel(NULL)
+, _minusSprite(nullptr)
+, _plusSprite(nullptr)
+, _minusLabel(nullptr)
+, _plusLabel(nullptr)
 {
 
 }
 
 ControlStepper::~ControlStepper()
 {
-    unscheduleAllSelectors();
+    unscheduleAllCallbacks();
     
     CC_SAFE_RELEASE(_minusSprite);
     CC_SAFE_RELEASE(_plusSprite);
@@ -82,29 +84,29 @@ bool ControlStepper::initWithMinusSpriteAndPlusSprite(Sprite *minusSprite, Sprit
         _value                              = 0;
         _stepValue                          = 1;
         _wraps                              = false;
-        this->ignoreAnchorPointForPosition( false );
+        this->setIgnoreAnchorPointForPosition( false );
     
         // Add the minus components
         this->setMinusSprite(minusSprite);
-		_minusSprite->setPosition( Point(minusSprite->getContentSize().width / 2, minusSprite->getContentSize().height / 2) );
+		_minusSprite->setPosition(minusSprite->getContentSize().width / 2, minusSprite->getContentSize().height / 2);
 		this->addChild(_minusSprite);
         
-        this->setMinusLabel( Label::create("-", ControlStepperLabelFont, 40));
+        this->setMinusLabel( Label::createWithSystemFont("-", ControlStepperLabelFont, 40));
         _minusLabel->setColor(ControlStepperLabelColorDisabled);
-        _minusLabel->setAnchorPoint(Point::ANCHOR_MIDDLE);
-        _minusLabel->setPosition(Point(_minusSprite->getContentSize().width / 2, _minusSprite->getContentSize().height / 2) );
+        _minusLabel->setAnchorPoint(Vec2::ANCHOR_MIDDLE);
+        _minusLabel->setPosition(_minusSprite->getContentSize().width / 2, _minusSprite->getContentSize().height / 2);
         _minusSprite->addChild(_minusLabel);
         
         // Add the plus components 
         this->setPlusSprite( plusSprite );
-		_plusSprite->setPosition( Point(minusSprite->getContentSize().width + plusSprite->getContentSize().width / 2, 
-                                                  minusSprite->getContentSize().height / 2) );
+		_plusSprite->setPosition(minusSprite->getContentSize().width + plusSprite->getContentSize().width / 2,
+                                                  minusSprite->getContentSize().height / 2);
 		this->addChild(_plusSprite);
         
-        this->setPlusLabel( Label::create("+", ControlStepperLabelFont, 40 ));
+        this->setPlusLabel( Label::createWithSystemFont("+", ControlStepperLabelFont, 40 ));
         _plusLabel->setColor( ControlStepperLabelColorEnabled );
-        _plusLabel->setAnchorPoint(Point::ANCHOR_MIDDLE);
-        _plusLabel->setPosition( Point(_plusSprite->getContentSize().width / 2, _plusSprite->getContentSize().height / 2) );
+        _plusLabel->setAnchorPoint(Vec2::ANCHOR_MIDDLE);
+        _plusLabel->setPosition(_plusSprite->getContentSize().width / 2, _plusSprite->getContentSize().height / 2);
         _plusSprite->addChild(_plusLabel);
         
         // Defines the content size
@@ -117,8 +119,8 @@ bool ControlStepper::initWithMinusSpriteAndPlusSprite(Sprite *minusSprite, Sprit
 
 ControlStepper* ControlStepper::create(Sprite *minusSprite, Sprite *plusSprite)
 {
-    ControlStepper* pRet = new ControlStepper();
-    if (pRet != NULL && pRet->initWithMinusSpriteAndPlusSprite(minusSprite, plusSprite))
+    ControlStepper* pRet = new (std::nothrow) ControlStepper();
+    if (pRet != nullptr && pRet->initWithMinusSpriteAndPlusSprite(minusSprite, plusSprite))
     {
         pRet->autorelease();
     }
@@ -221,16 +223,16 @@ void ControlStepper::startAutorepeat()
 {
     _autorepeatCount    = -1;
     
-    this->schedule(schedule_selector(ControlStepper::update), kAutorepeatDeltaTime, kRepeatForever, kAutorepeatDeltaTime * 3);
+    this->schedule(CC_SCHEDULE_SELECTOR(ControlStepper::update), kAutorepeatDeltaTime, CC_REPEAT_FOREVER, kAutorepeatDeltaTime * 3);
 }
 
 /** Stop the autorepeat. */
 void ControlStepper::stopAutorepeat()
 {
-    this->unschedule(schedule_selector(ControlStepper::update));
+    this->unschedule(CC_SCHEDULE_SELECTOR(ControlStepper::update));
 }
 
-void ControlStepper::update(float dt)
+void ControlStepper::update(float /*dt*/)
 {
     _autorepeatCount++;
     
@@ -248,7 +250,7 @@ void ControlStepper::update(float dt)
 
 //// ControlStepper Private Methods
 
-void ControlStepper::updateLayoutUsingTouchLocation(Point location)
+void ControlStepper::updateLayoutUsingTouchLocation(Vec2 location)
 {
     if (location.x < _minusSprite->getContentSize().width
         && _value > _minimumValue)
@@ -274,14 +276,14 @@ void ControlStepper::updateLayoutUsingTouchLocation(Point location)
 }
 
 
-bool ControlStepper::onTouchBegan(Touch *pTouch, Event *pEvent)
+bool ControlStepper::onTouchBegan(Touch *pTouch, Event* /*pEvent*/)
 {
     if (!isTouchInside(pTouch) || !isEnabled() || !isVisible())
     {
         return false;
     }
     
-    Point location    = this->getTouchLocation(pTouch);
+    Vec2 location    = this->getTouchLocation(pTouch);
     this->updateLayoutUsingTouchLocation(location);
     
     _touchInsideFlag = true;
@@ -294,11 +296,11 @@ bool ControlStepper::onTouchBegan(Touch *pTouch, Event *pEvent)
     return true;
 }
 
-void ControlStepper::onTouchMoved(Touch *pTouch, Event *pEvent)
+void ControlStepper::onTouchMoved(Touch *pTouch, Event* /*pEvent*/)
 {
     if (this->isTouchInside(pTouch))
     {
-        Point location    = this->getTouchLocation(pTouch);
+        Vec2 location    = this->getTouchLocation(pTouch);
         this->updateLayoutUsingTouchLocation(location);
         
         if (!_touchInsideFlag)
@@ -327,7 +329,7 @@ void ControlStepper::onTouchMoved(Touch *pTouch, Event *pEvent)
     }
 }
 
-void ControlStepper::onTouchEnded(Touch *pTouch, Event *pEvent)
+void ControlStepper::onTouchEnded(Touch *pTouch, Event* /*pEvent*/)
 {
     _minusSprite->setColor(Color3B::WHITE);
     _plusSprite->setColor(Color3B::WHITE);
@@ -339,7 +341,7 @@ void ControlStepper::onTouchEnded(Touch *pTouch, Event *pEvent)
     
     if (this->isTouchInside(pTouch))
     {
-        Point location    = this->getTouchLocation(pTouch);
+        Vec2 location    = this->getTouchLocation(pTouch);
         
         this->setValue(_value + ((location.x < _minusSprite->getContentSize().width) ? (0.0-_stepValue) : _stepValue));
     }

@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,8 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "CCActionFrame.h"
-#include "CCActionEase.h"
+#include "editor-support/cocostudio/CCActionFrame.h"
+#include "2d/CCActionEase.h"
 
 using namespace cocos2d;
 
@@ -78,12 +79,12 @@ int ActionFrame::getEasingType()
 	return (int)_easingType;
 }
 
-ActionInterval* ActionFrame::getAction(float fDuration)
+ActionInterval* ActionFrame::getAction(float /*fDuration*/)
 {
 	log("Need a definition of <getAction> for ActionFrame");
 	return nullptr;
 }
-ActionInterval* ActionFrame::getAction(float fDuration,ActionFrame* srcFrame)
+ActionInterval* ActionFrame::getAction(float fDuration, ActionFrame* /*srcFrame*/)
 {
 	return this->getAction(fDuration);
 }
@@ -221,7 +222,7 @@ ActionInterval* ActionFrame::getEasingAction(ActionInterval* action)
 //////////////////////////////////////////////////////////////////////////
 
 ActionMoveFrame::ActionMoveFrame()
-	: _position(Point(0.0f,0.0f))
+	: _position(Vec2(0.0f,0.0f))
 {
 	_frameType = (int)kKeyframeMove;
 }
@@ -229,11 +230,11 @@ ActionMoveFrame::~ActionMoveFrame()
 {
 
 }
-void ActionMoveFrame::setPosition(Point pos)
+void ActionMoveFrame::setPosition(Vec2 pos)
 {
 	_position = pos;
 }
-Point ActionMoveFrame::getPosition()
+Vec2 ActionMoveFrame::getPosition()
 {
 	return _position;
 }

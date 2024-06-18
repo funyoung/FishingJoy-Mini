@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,20 +23,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "cocostudio/CCComAudio.h"
-#include "SimpleAudioEngine.h"
+#include "editor-support/cocostudio/CCComAudio.h"
+#include "editor-support/cocostudio/SimpleAudioEngine.h"
+#include "platform/CCFileUtils.h"
 
 namespace cocostudio {
 
 IMPLEMENT_CLASS_COMPONENT_INFO(ComAudio)
-ComAudio::ComAudio(void)
+
+const std::string ComAudio::COMPONENT_NAME = "CCComAudio";
+
+ComAudio::ComAudio()
 : _filePath("")
 , _loop(false)
+, _startedSoundId(0)
 {
-    _name = "CCComAudio";
+    _name = COMPONENT_NAME;
 }
 
-ComAudio::~ComAudio(void)
+ComAudio::~ComAudio()
 {
     
 }
@@ -55,27 +61,59 @@ void ComAudio::onExit()
     stopAllEffects();
 }
 
-bool ComAudio::isEnabled() const
+void ComAudio::onAdd()
 {
-    return _enabled;
 }
 
-void ComAudio::setEnabled(bool b)
+void ComAudio::onRemove()
 {
-    _enabled = b;
+    stopBackgroundMusic(true);
+    stopAllEffects();
 }
-
 
 bool ComAudio::serialize(void* r)
 {
-	bool bRet = false;
-	do 
+    bool ret = false;
+	do
 	{
 		CC_BREAK_IF(r == nullptr);
-		rapidjson::Value *v = (rapidjson::Value *)r;
-		const char *className = DICTOOL->getStringValue_json(*v, "classname");
-		CC_BREAK_IF(className == nullptr);
-		const char *comName = DICTOOL->getStringValue_json(*v, "name");
+		SerData *serData = (SerData *)(r);
+		const rapidjson::Value *v = serData->_rData;
+		stExpCocoNode *cocoNode = serData->_cocoNode;
+        CocoLoader *cocoLoader = serData->_cocoLoader;
+		const char *className = nullptr;
+		const char *comName = nullptr;
+		const char *file = nullptr;
+		std::string filePath;
+		int resType = 0;
+		bool loop = false;
+		if (v != nullptr)
+		{
+			className = DICTOOL->getStringValue_json(*v, "classname");
+			CC_BREAK_IF(className == nullptr);
+			comName = DICTOOL->getStringValue_json(*v, "name");
+			const rapidjson::Value &fileData = DICTOOL->getSubDictionary_json(*v, "fileData");
+			CC_BREAK_IF(!DICTOOL->checkObjectExist_json(fileData));
+			file = DICTOOL->getStringValue_json(fileData, "path");
+			CC_BREAK_IF(file == nullptr);
+			resType = DICTOOL->getIntValue_json(fileData, "resourceType", -1);
+			CC_BREAK_IF(resType != 0);
+			loop = DICTOOL->getIntValue_json(*v, "loop") != 0? true:false;
+		}
+		else if (cocoNode != nullptr)
+		{
+			className = cocoNode[1].GetValue(cocoLoader);
+			CC_BREAK_IF(className == nullptr);
+			comName = cocoNode[2].GetValue(cocoLoader);
+			stExpCocoNode *pfileData = cocoNode[4].GetChildArray(cocoLoader);
+			CC_BREAK_IF(!pfileData);
+			file = pfileData[0].GetValue(cocoLoader);
+			CC_BREAK_IF(file == nullptr);
+			resType = atoi(pfileData[2].GetValue(cocoLoader));
+			CC_BREAK_IF(resType != 0);
+			loop = atoi(cocoNode[5].GetValue(cocoLoader)) != 0? true:false;
+			ret = true;
+		}
 		if (comName != nullptr)
 		{
 			setName(comName);
@@ -84,34 +122,21 @@ bool ComAudio::serialize(void* r)
 		{
 			setName(className);
 		}
-		const rapidjson::Value &fileData = DICTOOL->getSubDictionary_json(*v, "fileData");
-		CC_BREAK_IF(!DICTOOL->checkObjectExist_json(fileData));
-		const char *file = DICTOOL->getStringValue_json(fileData, "path");
-		CC_BREAK_IF(file == nullptr);
-		std::string filePath;
 		if (file != nullptr)
 		{
-			filePath.assign(cocos2d::CCFileUtils::getInstance()->fullPathForFilename(file));
+            if (strcmp(file, "") == 0)
+            {
+                continue;
+            }
+			filePath.assign(cocos2d::FileUtils::getInstance()->fullPathForFilename(file));
 		}
-		int resType = DICTOOL->getIntValue_json(fileData, "resourceType", -1);
-		CC_BREAK_IF(resType != 0);
 		if (strcmp(className, "CCBackgroundAudio") == 0)
 		{
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_WP8)
-			// no MP3 support for CC_PLATFORM_WP8
-			std::string::size_type pos = filePath.find(".mp3");
-			if (pos  == filePath.npos)
-			{
-				continue;
-			}
-			filePath.replace(pos, filePath.length(), ".wav");
-#endif
 			preloadBackgroundMusic(filePath.c_str());
-			bool loop = DICTOOL->getIntValue_json(*v, "loop") != 0? true:false;
 			setLoop(loop);
-            playBackgroundMusic(filePath.c_str(), loop);
+			playBackgroundMusic(filePath.c_str(), loop);
 		}
-		else if(strcmp(className, "CCComAudio") == 0)
+		else if(strcmp(className, COMPONENT_NAME.c_str()) == 0)
 		{
 			preloadEffect(filePath.c_str());
 		}
@@ -119,15 +144,14 @@ bool ComAudio::serialize(void* r)
 		{
 			CC_BREAK_IF(true);
 		}
-		bRet = true;
-	} while (0);
-
-	return bRet;
+		ret = true;
+	}while (0);
+	return ret;
 }
 
-ComAudio* ComAudio::create(void)
+ComAudio* ComAudio::create()
 {
-    ComAudio * pRet = new ComAudio();
+    ComAudio * pRet = new (std::nothrow) ComAudio();
     if (pRet && pRet->init())
     {
         pRet->autorelease();
@@ -299,4 +323,13 @@ bool ComAudio::isLoop()
 	return _loop;
 }
 
+void ComAudio::start()
+{
+    _startedSoundId = playEffect();
+}
+
+void ComAudio::stop()
+{
+    stopEffect(_startedSoundId);
+}
 }

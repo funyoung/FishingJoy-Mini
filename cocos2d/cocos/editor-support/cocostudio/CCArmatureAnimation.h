@@ -1,5 +1,6 @@
-/****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+﻿/****************************************************************************
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -26,8 +27,9 @@ THE SOFTWARE.
 #ifndef __CCANIMATION_H__
 #define __CCANIMATION_H__
 
-#include "cocostudio/CCProcessBase.h"
-#include "cocostudio/CCTween.h"
+#include "editor-support/cocostudio/CCProcessBase.h"
+#include "editor-support/cocostudio/CCTween.h"
+#include "editor-support/cocostudio/CocosStudioExport.h"
 #include <queue>
 
 namespace cocostudio {
@@ -65,7 +67,7 @@ struct MovementEvent
     std::string movementID;
 };
 
-class  ArmatureAnimation : public ProcessBase
+class  CC_STUDIO_DLL ArmatureAnimation : public ProcessBase
 {
 public:
     /**
@@ -74,7 +76,7 @@ public:
      */
     static ArmatureAnimation *create(Armature *armature);
 public:
-	/**
+    /**
      * @js ctor
      */
     ArmatureAnimation();
@@ -82,7 +84,7 @@ public:
      * @js NA
      * @lua NA
      */
-    virtual ~ArmatureAnimation(void);
+    virtual ~ArmatureAnimation();
 
     /**
      * Init with a Armature
@@ -156,15 +158,15 @@ public:
     /**
      * Pause the Process
      */
-    virtual void pause();
+    virtual void pause() override;
     /**
      * Resume the Process
      */
-    virtual void resume();
+    virtual void resume() override;
     /**
      * Stop the Process
      */
-    virtual void stop();
+    virtual void stop() override;
 
 
     /**
@@ -172,7 +174,7 @@ public:
      */
     ssize_t getMovementCount() const;
 
-    void update(float dt);
+    virtual void update(float dt) override;
 
     /**
      * Get current movementID
@@ -228,8 +230,8 @@ public:
      *
      * Similar to UserData, but instead of holding a void* it holds an object.
      * The UserObject will be retained once in this method,
-     * and the previous UserObject (if existed) will be relese.
-     * The UserObject will be released in Node's destructure.
+     * and the previous UserObject (if existed) will be release.
+     * The UserObject will be released in Node's destructor.
      *
      * @param userObject    A user assigned Object
      */
@@ -241,7 +243,7 @@ protected:
      * @js NA
      * @lua NA
      */
-    void updateHandler();
+    void updateHandler() override;
 
     /**
      * Update current key frame, and process auto stop, pause
@@ -274,15 +276,15 @@ protected:
     //! Scale the animation speed
     float _speedScale;
 
-    MovementData *_movementData;				//! MovementData save all MovementFrameDatas this animation used.
+    MovementData *_movementData;                //! MovementData save all MovementFrameDatas this animation used.
 
-    Armature *_armature;						//! A weak reference of armature
+    Armature *_armature;                        //! A weak reference of armature
 
-    std::string _movementID;				//! Current movment's name
+    std::string _movementID;                //! Current movement's name
 
-    int _toIndex;								//! The frame index in MovementData->m_pMovFrameDataArr, it's different from m_iFrameIndex.
+    int _toIndex;                                //! The frame index in MovementData->m_pMovFrameDataArr, it's different from m_iFrameIndex.
 
-    cocos2d::Vector<Tween*> _tweenList;
+    std::vector<Tween*> _tweenList;
 
     bool _ignoreFrameEvent;
     

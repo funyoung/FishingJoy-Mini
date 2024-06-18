@@ -1,5 +1,6 @@
 /****************************************************************************
- Copyright (c) 2013-2014 Chukong Technologies Inc.
+ Copyright (c) 2013-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos2d-x.org
 
@@ -21,58 +22,90 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
  ****************************************************************************/
+#pragma once
 
-#ifndef __MISCNODE_CCGRID_NODE_H__
-#define __MISCNODE_CCGRID_NODE_H__
-
-#include "CCNode.h"
-#include "kazmath/GL/matrix.h"
+#include "2d/CCNode.h"
 #include "renderer/CCGroupCommand.h"
 #include "renderer/CCCustomCommand.h"
 
 NS_CC_BEGIN
 
 class GridBase;
+/**
+ *  @addtogroup _2d
+ *  @{
+ */
 
-class NodeGrid : public Node
+/**
+ * @brief Base class for Grid Node.
+ */
+
+class CC_DLL NodeGrid : public Node
 {
 public:
+    /** Create a Grid Node.
+     *
+     * @return An autorelease Grid Node.
+     */
     static NodeGrid* create();
-
+    
+    static NodeGrid* create(const Rect& rect);
+    
+    /** Get a Grid Node. 
+     *
+     * @return Return a GridBase.
+     */
     GridBase* getGrid() { return _nodeGrid; }
     /**
-    * @js NA
-    */
+     * @js NA
+     */
     const GridBase* getGrid() const { return _nodeGrid; }
 
     /**
-     * Changes a grid object that is used when applying effects
+     * Changes a grid object that is used when applying effects.
      *
-     * @param grid  A Grid object that is used when applying effects
+     * @param grid  A Grid object that is used when applying effects.
      */
     void setGrid(GridBase *grid);
-
+    
+    /** Set the Grid Target. 
+     *
+     * @param target A Node is used to set the Grid Target.
+     */
     void setTarget(Node *target);
+    
+    /**
+     * @brief Set the effect grid rect.
+     * @param gridRect The effect grid rect.
+     */
+    void setGridRect(const Rect& gridRect) { _gridRect = gridRect; }
+    /**
+     * @brief Get the effect grid rect.
+     * @return Return the effect grid rect.
+     */
+    const Rect& getGridRect() const { return _gridRect; }
 
     // overrides
-    virtual void visit(Renderer *renderer, const kmMat4 &parentTransform, bool parentTransformUpdated) override;
+    virtual void visit(Renderer *renderer, const Mat4 &parentTransform, uint32_t parentFlags) override;
 
-protected:
+CC_CONSTRUCTOR_ACCESS:
     NodeGrid();
     virtual ~NodeGrid();
 
+protected:
     void onGridBeginDraw();
     void onGridEndDraw();
 
-    Node* _gridTarget;
-    GridBase* _nodeGrid;
+    Node* _gridTarget = nullptr;
+    GridBase* _nodeGrid = nullptr;
     GroupCommand _groupCommand;
     CustomCommand _gridBeginCommand;
     CustomCommand _gridEndCommand;
+    
+    Rect _gridRect = Rect::ZERO;
 
 private:
     CC_DISALLOW_COPY_AND_ASSIGN(NodeGrid);
 };
+/** @} */
 NS_CC_END
-
-#endif

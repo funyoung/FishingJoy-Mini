@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -30,6 +31,7 @@ THE SOFTWARE.
 #include "ui/UILayout.h"
 #include "ui/UIButton.h"
 #include "ui/UICheckBox.h"
+#include "ui/UIRadioButton.h"
 #include "ui/UIImageView.h"
 #include "ui/UIText.h"
 #include "ui/UITextAtlas.h"
@@ -45,13 +47,35 @@ THE SOFTWARE.
 #include "ui/UIHBox.h"
 #include "ui/UIVBox.h"
 #include "ui/UIRelativeBox.h"
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID || CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+#include "ui/UIVideoPlayer.h"
+#include "ui/UIWebView/UIWebView.h"
+#endif
+#include "ui/GUIExport.h"
+#include "ui/UIScale9Sprite.h"
+#include "ui/UIEditBox/UIEditBox.h"
+#include "ui/UILayoutComponent.h"
+#include "ui/UITabControl.h"
+#include "editor-support/cocostudio/CocosStudioExtension.h"
 
+/**
+ * @addtogroup ui
+ * @{
+ */
 NS_CC_BEGIN
 namespace ui {
 
-const char* CocosGUIVersion();
+
+/**
+ * Get current cocos GUI module version string.
+ *@return A string representation of GUI module version number
+ */
+CC_GUI_DLL const char* CocosGUIVersion();
 
 }
+
 NS_CC_END
+// end of ui group
+/// @}
 
 #endif /* defined(__CocosGUITest__Cocos__) */

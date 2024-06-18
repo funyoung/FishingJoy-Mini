@@ -5,6 +5,8 @@
  * Copyright 2012 Yannick Loriot. All rights reserved.
  * http://yannickloriot.com
  * 
+ * Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -29,7 +31,8 @@
 #define __CCCONTROLSTEPPER_H__
 
 #include "CCControl.h"
-#include "CCLabel.h"
+#include "2d/CCLabel.h"
+#include "extensions/ExtensionExport.h"
 
 NS_CC_EXT_BEGIN
 
@@ -40,7 +43,7 @@ NS_CC_EXT_BEGIN
  * @{
  */
 
-class ControlStepper : public Control
+class CC_EX_DLL ControlStepper : public Control
 {
 public:
     enum class Part
@@ -53,6 +56,7 @@ public:
     static ControlStepper* create(Sprite *minusSprite, Sprite *plusSprite);
     /**
      * @js ctor
+     * @lua new
      */
     ControlStepper();
     /**
@@ -78,10 +82,10 @@ public:
     virtual bool onTouchBegan(Touch *pTouch, Event *pEvent) override;
     virtual void onTouchMoved(Touch *pTouch, Event *pEvent) override;
     virtual void onTouchEnded(Touch *pTouch, Event *pEvent) override;
-    void update(float dt);
+    void update(float dt) override;
 
     /** Update the layout of the stepper with the given touch location. */
-    void updateLayoutUsingTouchLocation(Point location);
+    void updateLayoutUsingTouchLocation(Vec2 location);
 
     /** Start the autorepeat increment/decrement. */
     void startAutorepeat();

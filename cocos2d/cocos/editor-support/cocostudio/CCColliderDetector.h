@@ -1,5 +1,6 @@
-/****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+﻿/****************************************************************************
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -25,8 +26,9 @@ THE SOFTWARE.
 #ifndef __CCCOLLIDERDETECTOR_H__
 #define __CCCOLLIDERDETECTOR_H__
 
-#include "cocostudio/CCArmatureDefine.h"
-#include "cocostudio/CCDatas.h"
+#include "editor-support/cocostudio/CCArmatureDefine.h"
+#include "editor-support/cocostudio/CCDatas.h"
+#include "editor-support/cocostudio/CocosStudioExport.h"
 
 #ifndef PT_RATIO
 #define PT_RATIO 32
@@ -34,7 +36,7 @@ THE SOFTWARE.
 
 
 #if ENABLE_PHYSICS_CHIPMUNK_DETECT
-#include "chipmunk.h"
+#include "chipmunk/chipmunk.h"
 #elif ENABLE_PHYSICS_BOX2D_DETECT
 #include "Box2D/Box2D.h"
 #endif
@@ -48,7 +50,7 @@ class Bone;
  *  @js NA
  *  @lua NA
  */
-class ColliderFilter
+class CC_STUDIO_DLL ColliderFilter
 {
 public:
     virtual ~ColliderFilter() { }
@@ -85,7 +87,7 @@ protected:
 #endif
 };
 
-class ColliderBody : public cocos2d::Ref
+class CC_STUDIO_DLL ColliderBody : public cocos2d::Ref
 {
 public:
     ColliderBody(ContourData *contourData);
@@ -105,7 +107,7 @@ public:
     virtual void setShape(cpShape *shape) { _shape = shape; }
     virtual cpShape *getShape() const { return _shape; }
 #elif ENABLE_PHYSICS_SAVE_CALCULATED_VERTEX
-    virtual const std::vector<cocos2d::Point> &getCalculatedVertexList() const { return _calculatedVertexList; }
+    virtual const std::vector<cocos2d::Vec2> &getCalculatedVertexList() const { return _calculatedVertexList; }
 #endif
 
 private:
@@ -117,7 +119,7 @@ private:
     cpShape *_shape;
     ColliderFilter *_filter;
 #elif ENABLE_PHYSICS_SAVE_CALCULATED_VERTEX
-    std::vector<cocos2d::Point> _calculatedVertexList;
+    std::vector<cocos2d::Vec2> _calculatedVertexList;
 #endif
 
     ContourData *_contourData;
@@ -130,13 +132,13 @@ private:
  *  @js NA
  *  @lua NA
  */
-class ColliderDetector : public cocos2d::Ref
+class CC_STUDIO_DLL ColliderDetector : public cocos2d::Ref
 {
 public:
     static ColliderDetector *create();
     static ColliderDetector *create(Bone *bone);
 public:
-	/**
+    /**
      * @js ctor
      */
     ColliderDetector();
@@ -144,7 +146,7 @@ public:
      * @js NA
      * @lua NA
      */
-    ~ColliderDetector(void);
+    ~ColliderDetector();
 
     virtual bool init();
     virtual bool init(Bone *bone);
@@ -155,7 +157,7 @@ public:
     void removeContourData(ContourData *contourData);
     void removeAll();
 
-    void updateTransform(kmMat4 &t);
+    void updateTransform(cocos2d::Mat4 &t);
 
     void setActive(bool active);
     bool getActive();

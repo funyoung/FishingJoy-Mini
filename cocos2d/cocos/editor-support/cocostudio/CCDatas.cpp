@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,9 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "cocostudio/CCDatas.h"
-#include "cocostudio/CCUtilMath.h"
-#include "cocostudio/CCTransformHelp.h"
+#include "editor-support/cocostudio/CCDatas.h"
+#include "editor-support/cocostudio/CCUtilMath.h"
+#include "editor-support/cocostudio/CCTransformHelp.h"
 
 using namespace cocos2d;
 
@@ -142,11 +143,11 @@ Color4B BaseData::getColor()
     return Color4B(r, g, b, a);
 }
 
-const std::string DisplayData::changeDisplayToTexture(const std::string& displayName)
+std::string DisplayData::changeDisplayToTexture(const std::string& displayName)
 {
     // remove .xxx
     std::string textureName = displayName;
-    size_t startPos = textureName.find_last_of(".");
+    size_t startPos = textureName.find_last_of('.');
 
     if(startPos != std::string::npos)
     {
@@ -156,7 +157,7 @@ const std::string DisplayData::changeDisplayToTexture(const std::string& display
     return textureName;
 }
 
-DisplayData::DisplayData(void)
+DisplayData::DisplayData()
     : displayType(CS_DISPLAY_MAX)
     , displayName("")
 {
@@ -168,7 +169,7 @@ void DisplayData::copy(DisplayData *displayData)
     displayType = displayData->displayType;
 }
 
-SpriteDisplayData::SpriteDisplayData(void)
+SpriteDisplayData::SpriteDisplayData()
 {
     displayType = CS_DISPLAY_SPRITE;
 }
@@ -184,25 +185,25 @@ void SpriteDisplayData::copy(DisplayData *displayData)
     }
 }
 
-ArmatureDisplayData::ArmatureDisplayData(void)
+ArmatureDisplayData::ArmatureDisplayData()
 {
     displayType = CS_DISPLAY_ARMATURE;
 }
 
-ParticleDisplayData::ParticleDisplayData(void)
+ParticleDisplayData::ParticleDisplayData()
 {
     displayType = CS_DISPLAY_PARTICLE;
 }
 
 
 
-BoneData::BoneData(void)
+BoneData::BoneData()
     : name("")
     , parentName("")
 {
 }
 
-BoneData::~BoneData(void)
+BoneData::~BoneData()
 {
 }
 
@@ -246,15 +247,15 @@ BoneData *ArmatureData::getBoneData(const std::string& boneName)
     return static_cast<BoneData*>(boneDataDic.at(boneName));
 }
 
-FrameData::FrameData(void)
+FrameData::FrameData()
     : frameID(0)
     , duration(1)
     , tweenEasing(cocos2d::tweenfunc::Linear)
     , easingParamNumber(0)
-    , easingParams(NULL)
+    , easingParams(nullptr)
     , isTween(true)
     , displayIndex(0)
-    , blendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED)
+    , blendFunc(BlendFunc::ALPHA_PREMULTIPLIED)
 
     , strEvent("")
     , strMovement("")
@@ -263,9 +264,9 @@ FrameData::FrameData(void)
 {
 }
 
-FrameData::~FrameData(void)
+FrameData::~FrameData()
 {
-    CC_SAFE_DELETE(easingParams);
+    CC_SAFE_DELETE_ARRAY(easingParams);
 }
 
 void FrameData::copy(const BaseData *baseData)
@@ -280,10 +281,10 @@ void FrameData::copy(const BaseData *baseData)
         tweenEasing = frameData->tweenEasing;
         easingParamNumber = frameData->easingParamNumber;
         
-        CC_SAFE_DELETE(easingParams);
+        CC_SAFE_DELETE_ARRAY(easingParams);
         if (easingParamNumber != 0)
         {
-            easingParams = new float[easingParamNumber];
+            easingParams = new (std::nothrow) float[easingParamNumber];
             for (int i = 0; i<easingParamNumber; i++)
             {
                 easingParams[i] = frameData->easingParams[i];
@@ -291,6 +292,7 @@ void FrameData::copy(const BaseData *baseData)
         }
 
         blendFunc = frameData->blendFunc;
+        isTween = frameData->isTween;
     }
 }
 
@@ -302,7 +304,7 @@ MovementBoneData::MovementBoneData()
 {
 }
 
-MovementBoneData::~MovementBoneData(void)
+MovementBoneData::~MovementBoneData()
 {
 }
 
@@ -323,7 +325,7 @@ FrameData *MovementBoneData::getFrameData(int index)
 
 
 
-MovementData::MovementData(void)
+MovementData::MovementData()
     : name("")
     , duration(0)
     , scale(1.0f)
@@ -334,7 +336,7 @@ MovementData::MovementData(void)
 {
 }
 
-MovementData::~MovementData(void)
+MovementData::~MovementData()
 {
 }
 
@@ -350,11 +352,11 @@ MovementBoneData *MovementData::getMovementBoneData(const std::string& boneName)
 
 
 
-AnimationData::AnimationData(void)
+AnimationData::AnimationData()
 {
 }
 
-AnimationData::~AnimationData(void)
+AnimationData::~AnimationData()
 {
 }
 
@@ -389,7 +391,7 @@ bool ContourData::init()
     return true;
 }
 
-void ContourData::addVertex(Point &vertex)
+void ContourData::addVertex(Vec2 &vertex)
 {
     vertexList.push_back(vertex);
 }

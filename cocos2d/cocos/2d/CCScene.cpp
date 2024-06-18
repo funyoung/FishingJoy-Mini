@@ -2,7 +2,8 @@
 Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2011      Zynga Inc.
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -25,49 +26,113 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "CCScene.h"
-#include "CCDirector.h"
-#include "CCLayer.h"
-#include "CCSprite.h"
-#include "CCSpriteBatchNode.h"
-#include "CCPhysicsWorld.h"
+#include "2d/CCScene.h"
+#include "base/CCDirector.h"
+#include "2d/CCCamera.h"
+#include "base/CCEventDispatcher.h"
+#include "base/CCEventListenerCustom.h"
+#include "base/ccUTF8.h"
+#include "renderer/CCRenderer.h"
+
+#if CC_USE_PHYSICS
+#include "physics/CCPhysicsWorld.h"
+#endif
+
+#if CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION
+#include "physics3d/CCPhysics3DWorld.h"
+#include "physics3d/CCPhysics3DComponent.h"
+#endif
+
+#if CC_USE_NAVMESH
+#include "navmesh/CCNavMesh.h"
+#endif
 
 NS_CC_BEGIN
 
 Scene::Scene()
-#if CC_USE_PHYSICS
-: _physicsWorld(nullptr)
-#endif
+: _defaultCamera(Camera::create())
+, _event(Director::getInstance()->getEventDispatcher()->addCustomEventListener(Director::EVENT_PROJECTION_CHANGED, std::bind(&Scene::onProjectionChanged, this, std::placeholders::_1)))
 {
     _ignoreAnchorPointForPosition = true;
-    setAnchorPoint(Point(0.5f, 0.5f));
+    setAnchorPoint(Vec2(0.5f, 0.5f));
+    
+    //create default camera
+
+    addChild(_defaultCamera);
+    
+    _event->retain();
+    
+    Camera::_visitingCamera = nullptr;
 }
 
 Scene::~Scene()
 {
-#if CC_USE_PHYSICS
-    CC_SAFE_DELETE(_physicsWorld);
+#if CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION
+    CC_SAFE_RELEASE(_physics3DWorld);
+    CC_SAFE_RELEASE(_physics3dDebugCamera);
 #endif
+#if CC_USE_NAVMESH
+    CC_SAFE_RELEASE(_navMesh);
+#endif
+    Director::getInstance()->getEventDispatcher()->removeEventListener(_event);
+    CC_SAFE_RELEASE(_event);
+    
+#if CC_USE_PHYSICS
+    delete _physicsWorld;
+#endif
+    
+#if CC_ENABLE_GC_FOR_NATIVE_OBJECTS
+    auto sEngine = ScriptEngineManager::getInstance()->getScriptEngine();
+    if (sEngine)
+    {
+        sEngine->releaseAllChildrenRecursive(this);
+    }
+#endif // CC_ENABLE_GC_FOR_NATIVE_OBJECTS
 }
+
+#if CC_USE_NAVMESH
+void Scene::setNavMesh(NavMesh* navMesh)
+{
+    if (_navMesh != navMesh)
+    {
+        CC_SAFE_RETAIN(navMesh);
+        CC_SAFE_RELEASE(_navMesh);
+        _navMesh = navMesh;
+    }
+}
+#endif
 
 bool Scene::init()
 {
-    bool ret = false;
-     do 
-     {
-         Director * director;
-         CC_BREAK_IF( ! (director = Director::getInstance()) );
-         this->setContentSize(director->getWinSize());
-         // success
-         ret = true;
-     } while (0);
-     return ret;
+    auto size = Director::getInstance()->getWinSize();
+    return initWithSize(size);
 }
 
-Scene *Scene::create()
+bool Scene::initWithSize(const Size& size)
 {
-    Scene *ret = new Scene();
+    setContentSize(size);
+    return true;
+}
+
+Scene* Scene::create()
+{
+    Scene *ret = new (std::nothrow) Scene();
     if (ret && ret->init())
+    {
+        ret->autorelease();
+        return ret;
+    }
+    else
+    {
+        CC_SAFE_DELETE(ret);
+        return nullptr;
+    }
+}
+
+Scene* Scene::createWithSize(const Size& size)
+{
+    Scene *ret = new (std::nothrow) Scene();
+    if (ret && ret->initWithSize(size))
     {
         ret->autorelease();
         return ret;
@@ -84,30 +149,144 @@ std::string Scene::getDescription() const
     return StringUtils::format("<Scene | tag = %d>", _tag);
 }
 
-Scene* Scene::getScene()
+void Scene::onProjectionChanged(EventCustom* /*event*/)
 {
-    return this;
-}
-
-#if CC_USE_PHYSICS
-void Scene::addChild(Node* child, int zOrder, int tag)
-{
-    Node::addChild(child, zOrder, tag);
-    addChildToPhysicsWorld(child);
-}
-
-void Scene::update(float delta)
-{
-    Node::update(delta);
-    if (nullptr != _physicsWorld)
+    if (_defaultCamera)
     {
-        _physicsWorld->update(delta);
+        _defaultCamera->initDefault();
     }
 }
 
-Scene *Scene::createWithPhysics()
+static bool camera_cmp(const Camera* a, const Camera* b)
 {
-    Scene *ret = new Scene();
+    return a->getRenderOrder() < b->getRenderOrder();
+}
+
+const std::vector<Camera*>& Scene::getCameras()
+{
+    if (_cameraOrderDirty)
+    {
+        stable_sort(_cameras.begin(), _cameras.end(), camera_cmp);
+        _cameraOrderDirty = false;
+    }
+    return _cameras;
+}
+
+void Scene::render(Renderer* renderer, const Mat4& eyeTransform, const Mat4* eyeProjection)
+{
+    auto director = Director::getInstance();
+    Camera* defaultCamera = nullptr;
+    const auto& transform = getNodeToParentTransform();
+
+    for (const auto& camera : getCameras())
+    {
+        if (!camera->isVisible())
+            continue;
+
+        Camera::_visitingCamera = camera;
+        if (Camera::_visitingCamera->getCameraFlag() == CameraFlag::DEFAULT)
+        {
+            defaultCamera = Camera::_visitingCamera;
+        }
+
+        // There are two ways to modify the "default camera" with the eye Transform:
+        // a) modify the "nodeToParentTransform" matrix
+        // b) modify the "additional transform" matrix
+        // both alternatives are correct, if the user manually modifies the camera with a camera->setPosition()
+        // then the "nodeToParent transform" will be lost.
+        // And it is important that the change is "permanent", because the matrix might be used for calculate
+        // culling and other stuff.
+        if (eyeProjection)
+            camera->setAdditionalProjection(*eyeProjection * camera->getProjectionMatrix().getInversed());
+
+        camera->setAdditionalTransform(eyeTransform.getInversed());
+        director->pushMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_PROJECTION);
+        director->loadMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_PROJECTION, Camera::_visitingCamera->getViewProjectionMatrix());
+
+        camera->apply();
+        //clear background with max depth
+        camera->clearBackground();
+        //visit the scene
+        visit(renderer, transform, 0);
+#if CC_USE_NAVMESH
+        if (_navMesh && _navMeshDebugCamera == camera)
+        {
+            _navMesh->debugDraw(renderer);
+        }
+#endif
+
+        renderer->render();
+
+        director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_PROJECTION);
+
+        // we shouldn't restore the transform matrix since it could be used
+        // from "update" or other parts of the game to calculate culling or something else.
+        //        camera->setNodeToParentTransform(eyeCopy);
+    }
+
+#if CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION
+    if (_physics3DWorld && _physics3DWorld->isDebugDrawEnabled())
+    {
+        Camera *physics3dDebugCamera = _physics3dDebugCamera != nullptr ? _physics3dDebugCamera: defaultCamera;
+
+        if (eyeProjection)
+            physics3dDebugCamera->setAdditionalProjection(*eyeProjection * physics3dDebugCamera->getProjectionMatrix().getInversed());
+
+        physics3dDebugCamera->setAdditionalTransform(eyeTransform.getInversed());
+        director->pushMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_PROJECTION);
+        director->loadMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_PROJECTION, physics3dDebugCamera->getViewProjectionMatrix());
+
+        physics3dDebugCamera->apply();
+        physics3dDebugCamera->clearBackground();
+
+        _physics3DWorld->debugDraw(renderer);
+        renderer->render();
+
+        director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_PROJECTION);
+    }
+#endif
+
+    Camera::_visitingCamera = nullptr;
+}
+
+void Scene::removeAllChildren()
+{
+    if (_defaultCamera)
+        _defaultCamera->retain();
+
+    Node::removeAllChildren();
+
+    if (_defaultCamera)
+    {
+        addChild(_defaultCamera);
+        _defaultCamera->release();
+    }
+}
+
+#if CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION
+void Scene::setPhysics3DDebugCamera(Camera* camera)
+{
+    CC_SAFE_RETAIN(camera);
+    CC_SAFE_RELEASE(_physics3dDebugCamera);
+    _physics3dDebugCamera = camera;
+}
+#endif
+
+#if CC_USE_NAVMESH
+void Scene::setNavMeshDebugCamera(Camera *camera)
+{
+    CC_SAFE_RETAIN(camera);
+    CC_SAFE_RELEASE(_navMeshDebugCamera);
+    _navMeshDebugCamera = camera;
+}
+
+#endif
+
+#if (CC_USE_PHYSICS || (CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION))
+
+Scene* Scene::createWithPhysics()
+{
+    Scene *ret = new (std::nothrow) Scene();
     if (ret && ret->initWithPhysics())
     {
         ret->autorelease();
@@ -122,41 +301,52 @@ Scene *Scene::createWithPhysics()
 
 bool Scene::initWithPhysics()
 {
+#if CC_USE_PHYSICS
+    _physicsWorld = PhysicsWorld::construct(this);
+#endif
+
     bool ret = false;
     do
     {
         Director * director;
         CC_BREAK_IF( ! (director = Director::getInstance()) );
+
         this->setContentSize(director->getWinSize());
-        CC_BREAK_IF(! (_physicsWorld = PhysicsWorld::construct(*this)));
-        
-        this->scheduleUpdate();
+
+#if CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION
+        Physics3DWorldDes info;
+        CC_BREAK_IF(! (_physics3DWorld = Physics3DWorld::create(&info)));
+        _physics3DWorld->retain();
+#endif
+
         // success
         ret = true;
     } while (0);
     return ret;
 }
 
-void Scene::addChildToPhysicsWorld(Node* child)
+#endif
+
+#if (CC_USE_PHYSICS || (CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION) || CC_USE_NAVMESH)
+void Scene::stepPhysicsAndNavigation(float deltaTime)
 {
-    if (_physicsWorld)
+#if CC_USE_PHYSICS
+    if (_physicsWorld && _physicsWorld->isAutoStep())
+        _physicsWorld->update(deltaTime);
+#endif
+
+#if CC_USE_3D_PHYSICS && CC_ENABLE_BULLET_INTEGRATION
+    if (_physics3DWorld)
     {
-        std::function<void(Node*)> addToPhysicsWorldFunc = nullptr;
-        addToPhysicsWorldFunc = [this, &addToPhysicsWorldFunc](Node* node) -> void
-        {
-            if (node->getPhysicsBody())
-            {
-                _physicsWorld->addBody(node->getPhysicsBody());
-            }
-            
-            auto& children = node->getChildren();
-            for( const auto &n : children) {
-                addToPhysicsWorldFunc(n);
-            }
-        };
-        
-        addToPhysicsWorldFunc(child);
+        _physics3DWorld->stepSimulate(deltaTime);
     }
+#endif
+#if CC_USE_NAVMESH
+    if (_navMesh)
+    {
+        _navMesh->update(deltaTime);
+    }
+#endif
 }
 #endif
 

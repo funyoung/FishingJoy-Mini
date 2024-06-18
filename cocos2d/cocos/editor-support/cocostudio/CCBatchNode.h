@@ -1,5 +1,6 @@
-/****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+﻿/****************************************************************************
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -25,8 +26,9 @@ THE SOFTWARE.
 #ifndef __CCBATCHNODE_H__
 #define __CCBATCHNODE_H__
 
-#include "CCNode.h"
-#include "cocostudio/CCArmatureDefine.h"
+#include "2d/CCNode.h"
+#include "editor-support/cocostudio/CCArmatureDefine.h"
+#include "editor-support/cocostudio/CocosStudioExport.h"
 
 namespace cocos2d {
     class GroupCommand;
@@ -34,12 +36,12 @@ namespace cocos2d {
 
 namespace cocostudio {
 
-class BatchNode : public cocos2d::Node
+class CC_STUDIO_DLL BatchNode : public cocos2d::Node
 {
 public:
     static BatchNode *create();
 public:
-	/**
+    /**
      * @js ctor
      */
     BatchNode();
@@ -52,12 +54,12 @@ public:
      *  @js NA
      */
     virtual bool init() override;
-    virtual void addChild(cocos2d::Node *pChild) override;
-    virtual void addChild(cocos2d::Node *pChild, int zOrder) override;
+    using Node::addChild;
     virtual void addChild(cocos2d::Node *pChild, int zOrder, int tag) override;
+    virtual void addChild(cocos2d::Node *pChild, int zOrder, const std::string &name) override;
     virtual void removeChild(cocos2d::Node* child, bool cleanup) override;
-    virtual void visit(cocos2d::Renderer *renderer, const kmMat4 &parentTransform, bool parentTransformUpdated) override;
-    virtual void draw(cocos2d::Renderer *renderer, const kmMat4 &transform, bool transformUpdated) override;
+    virtual void visit(cocos2d::Renderer *renderer, const cocos2d::Mat4 &parentTransform, uint32_t parentFlags) override;
+    virtual void draw(cocos2d::Renderer *renderer, const cocos2d::Mat4 &transform, uint32_t flags) override;
     
 protected:
     void generateGroupCommand();

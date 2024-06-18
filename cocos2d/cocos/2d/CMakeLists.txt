@@ -1,230 +1,139 @@
-if(WIN32)
+set(COCOS_2D_HEADER
 
-ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
+    2d/CCActionPageTurn3D.h
+    2d/CCActionTween.h
+    2d/CCGrid.h
+    2d/CCSpriteFrameCache.h
+    2d/CCTMXTiledMap.h
+    2d/CCLayer.h
+    2d/CCActionCamera.h
+    2d/CCParticleExamples.h
+    2d/CCSprite.h
+    2d/CCNode.h
+    2d/CCComponentContainer.h
+    2d/CCActionProgressTimer.h
+    2d/CCTweenFunction.h
+    2d/CCLight.h
+    2d/CCAutoPolygon.h
+    2d/CCFontAtlas.h
+    2d/CCAtlasNode.h
+    2d/CCClippingNode.h
+    2d/CCRenderTexture.h
+    2d/CCActionInterval.h
+    2d/CCTMXXMLParser.h
+    2d/CCActionInstant.h
+    2d/CCLabel.h
+    2d/CCComponent.h
+    2d/CCLabelAtlas.h
+    2d/CCActionCatmullRom.h
+    2d/CCActionGrid.h
+    2d/CCParticleBatchNode.h
+    2d/CCClippingRectangleNode.h
+    2d/CCActionEase.h
+    2d/CCScene.h
+    2d/CCProtectedNode.h
+    2d/CCTextFieldTTF.h
+    2d/CCAnimationCache.h
+    2d/CCFastTMXLayer.h
+    2d/CCFontAtlasCache.h
+    2d/CCFont.h
+    2d/CCParticleSystemQuad.h
+    2d/CCActionGrid3D.h
+    2d/CCCameraBackgroundBrush.h
+    2d/CCFastTMXTiledMap.h
+    2d/CCLabelTextFormatter.h
+    2d/CCMenuItem.h
+    2d/CCFontFNT.h
+    2d/CCSpriteBatchNode.h
+    2d/CCTransitionProgress.h
+    2d/CCSpriteFrame.h
+    2d/CCTMXObjectGroup.h
+    2d/CCAnimation.h
+    2d/CCNodeGrid.h
+    2d/CCFontFreeType.h
+    2d/CCAction.h
+    2d/CCTransition.h
+    2d/CCTransitionPageTurn.h
+    2d/CCFontCharMap.h
+    2d/CCParticleSystem.h
+    2d/CCProgressTimer.h
+    2d/CCTileMapAtlas.h
+    2d/CCActionTiledGrid.h
+    2d/CCActionManager.h
+    2d/CCMotionStreak.h
+    2d/CCMenu.h
+    2d/CCDrawNode.h
+    2d/CCTMXLayer.h
+    2d/CCCamera.h
+    2d/CCParallaxNode.h
+    )
 
-set(PLATFORM_SRC
-  platform/win32/CCStdC.cpp
-  platform/win32/CCFileUtilsWin32.cpp
-  platform/win32/CCCommon.cpp
-  platform/win32/CCApplication.cpp
-  platform/desktop/CCGLView.cpp
-  platform/win32/CCDevice.cpp
-)
+set(COCOS_2D_SRC
 
-elseif(APPLE)
-
-else()
-
-set(PLATFORM_SRC
-  platform/linux/CCStdC.cpp
-  platform/linux/CCFileUtilsLinux.cpp
-  platform/linux/CCCommon.cpp
-  platform/linux/CCApplication.cpp
-  platform/desktop/CCGLView.cpp
-  platform/linux/CCDevice.cpp
-)
-
-endif()
-
-
-set(COCOS2D_SRC
-  CCAction.cpp
-  CCActionCamera.cpp
-  CCTweenFunction.cpp
-  CCActionEase.cpp
-  CCActionGrid.cpp
-  CCActionGrid3D.cpp
-  CCActionInstant.cpp
-  CCActionInterval.cpp
-  CCActionManager.cpp
-  CCActionPageTurn3D.cpp
-  CCActionProgressTimer.cpp
-  CCActionTiledGrid.cpp
-  CCActionCatmullRom.cpp
-  CCActionTween.cpp
-  CCAtlasNode.cpp
-  CCNode.cpp
-  CCEventAcceleration.cpp
-  CCEventListenerAcceleration.cpp
-  CCEvent.cpp
-  CCEventDispatcher.cpp
-  CCEventListener.cpp
-  CCEventKeyboard.cpp
-  CCEventListenerKeyboard.cpp
-  CCEventMouse.cpp
-  CCEventListenerMouse.cpp
-  CCTouch.cpp
-  CCEventTouch.cpp
-  CCEventListenerTouch.cpp
-  CCEventCustom.cpp
-  CCEventListenerCustom.cpp
-  CCDrawingPrimitives.cpp
-  CCDrawNode.cpp
-  CCGrabber.cpp
-  CCGrid.cpp
-  CCNodeGrid.cpp
-  CCFont.cpp
-  CCFontAtlas.cpp
-  CCFontAtlasCache.cpp
-  CCFontFNT.cpp
-  CCFontFreeType.cpp
-  CCFontCharMap.cpp
-  CCLabel.cpp
-  CCLabelAtlas.cpp
-  CCLabelBMFont.cpp
-  CCLabelTTF.cpp
-  CCLabelTextFormatter.cpp
-  CCLayer.cpp
-  CCScene.cpp
-  CCTransition.cpp
-  CCTransitionPageTurn.cpp
-  CCTransitionProgress.cpp
-  CCMenu.cpp
-  CCMenuItem.cpp
-  CCMotionStreak.cpp
-  CCProgressTimer.cpp
-  CCClippingNode.cpp
-  CCRenderTexture.cpp
-  CCParticleExamples.cpp
-  CCParticleSystem.cpp
-  CCParticleSystemQuad.cpp
-  CCParticleBatchNode.cpp
-  CCScriptSupport.cpp
-  CCAnimation.cpp
-  CCAnimationCache.cpp
-  CCSprite.cpp
-  CCSpriteBatchNode.cpp
-  CCSpriteFrame.cpp
-  CCSpriteFrameCache.cpp
-  ccUTF8.cpp
-  CCProfiling.cpp
-  CCUserDefault.cpp
-  TransformUtils.cpp
-  base64.cpp
-  ccUtils.cpp
-  CCVertex.cpp
-  CCNotificationCenter.cpp
-  TGAlib.cpp
-  ZipUtils.cpp
-  ccCArray.cpp
-  CCComponent.cpp
-  CCComponentContainer.cpp
-  CCIMEDispatcher.cpp
-  CCTextFieldTTF.cpp
-  CCTexture2D.cpp
-  CCTextureAtlas.cpp
-  CCTextureCache.cpp
-  CCParallaxNode.cpp
-  CCTMXLayer.cpp
-  CCTMXObjectGroup.cpp
-  CCTMXTiledMap.cpp
-  CCTMXXMLParser.cpp
-  CCTileMapAtlas.cpp
-  CCGLProgram.cpp
-  ccGLStateCache.cpp
-  CCShaderCache.cpp
-  ccShaders.cpp
-  CCConfiguration.cpp
-  CCDirector.cpp
-  CCScheduler.cpp
-  ccFPSImages.c
-  ccTypes.cpp
-  cocos2d.cpp
-  CCDeprecated.cpp
-  platform/CCSAXParser.cpp
-  platform/CCThread.cpp
-  platform/CCGLViewProtocol.cpp
-  platform/CCFileUtils.cpp
-  platform/CCImage.cpp
-  ../../external/edtaa3func/edtaa3func.cpp
-  renderer/CCCustomCommand.cpp
-  renderer/CCFrustum.cpp
-  renderer/CCGroupCommand.cpp
-  renderer/CCMaterialManager.cpp
-  renderer/CCQuadCommand.cpp
-  renderer/CCBatchCommand.cpp
-  renderer/CCRenderCommand.cpp
-  renderer/CCRenderer.cpp
-  renderer/CCRenderMaterial.cpp
-)
-
-include(../physics/CMakeLists.txt)
-
-add_library(cocos2d STATIC
-  ${COCOS2D_SRC}
-  ${PLATFORM_SRC}
-  ${COCOS_PHYSICS_SRC}
-)
-
-if(WIN32)
-
-if(MINGW)
-
-set(COCOS_LINK
-  z
-  jpeg
-  png
-  webp
-  tiff
-  glfw3
-  glew32
-  opengl32
-  iconv
-  freetype
-  bz2
-  )
-
-else()
-
-
-set(COCOS_LINK
-  libjpeg
-  libpng
-  libwebp
-  libtiff
-  freetype250
-  glfw3
-  glew32
-  opengl32
-  libiconv
-  libzlib
-  )
-
-endif()
-
-elseif(APPLE)
-
-else()
-set(COCOS_LINK
-  jpeg
-  webp
-  tiff
-  freetype
-  fontconfig
-  png
-  pthread
-  glfw
-  GLEW
-  GL
-  X11
-  rt
-  z
-)
-endif()
-
-target_link_libraries(cocos2d
-  cocosbase
-  chipmunk_static
-  tinyxml2
-  kazmath
-  unzip
-  xxhash
-  ${COCOS_LINK}
-)
-
-set_target_properties(cocos2d
-    PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-)
-
+    2d/CCActionCamera.cpp
+    2d/CCActionCatmullRom.cpp
+    2d/CCAction.cpp
+    2d/CCActionEase.cpp
+    2d/CCActionGrid3D.cpp
+    2d/CCActionGrid.cpp
+    2d/CCActionInstant.cpp
+    2d/CCActionInterval.cpp
+    2d/CCActionManager.cpp
+    2d/CCActionPageTurn3D.cpp
+    2d/CCActionProgressTimer.cpp
+    2d/CCActionTiledGrid.cpp
+    2d/CCActionTween.cpp
+    2d/CCAnimationCache.cpp
+    2d/CCAnimation.cpp
+    2d/CCAtlasNode.cpp
+    2d/CCCamera.cpp
+    2d/CCCameraBackgroundBrush.cpp
+    2d/CCClippingNode.cpp
+    2d/CCClippingRectangleNode.cpp
+    2d/CCComponentContainer.cpp
+    2d/CCComponent.cpp
+    2d/CCDrawNode.cpp
+    2d/CCFastTMXLayer.cpp
+    2d/CCFastTMXTiledMap.cpp
+    2d/CCFontAtlasCache.cpp
+    2d/CCFontAtlas.cpp
+    2d/CCFontCharMap.cpp
+    2d/CCFont.cpp
+    2d/CCFontFNT.cpp
+    2d/CCFontFreeType.cpp
+    2d/CCGrid.cpp
+    2d/CCLabelAtlas.cpp
+    2d/CCLabel.cpp
+    2d/CCLabelTextFormatter.cpp
+    2d/CCLayer.cpp
+    2d/CCLight.cpp
+    2d/CCMenu.cpp
+    2d/CCMenuItem.cpp
+    2d/CCMotionStreak.cpp
+    2d/CCNode.cpp
+    2d/CCNodeGrid.cpp
+    2d/CCParallaxNode.cpp
+    2d/CCParticleBatchNode.cpp
+    2d/CCParticleExamples.cpp
+    2d/CCParticleSystem.cpp
+    2d/CCParticleSystemQuad.cpp
+    2d/CCProgressTimer.cpp
+    2d/CCProtectedNode.cpp
+    2d/CCRenderTexture.cpp
+    2d/CCScene.cpp
+    2d/CCSpriteBatchNode.cpp
+    2d/CCSprite.cpp
+    2d/CCSpriteFrameCache.cpp
+    2d/CCSpriteFrame.cpp
+    2d/CCAutoPolygon.cpp
+    2d/CCTextFieldTTF.cpp
+    2d/CCTileMapAtlas.cpp
+    2d/CCTMXLayer.cpp
+    2d/CCTMXObjectGroup.cpp
+    2d/CCTMXTiledMap.cpp
+    2d/CCTMXXMLParser.cpp
+    2d/CCTransition.cpp
+    2d/CCTransitionPageTurn.cpp
+    2d/CCTransitionProgress.cpp
+    2d/CCTweenFunction.cpp
+    )

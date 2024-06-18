@@ -8,6 +8,8 @@
  * Modified by Yannick Loriot.
  * http://yannickloriot.com
  * 
+ * Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -36,8 +38,8 @@ NS_CC_EXT_BEGIN
 ControlHuePicker::ControlHuePicker()
 : _hue(0.0f)
 , _huePercentage(0.0f)
-, _background(NULL)
-, _slider(NULL)
+, _background(nullptr)
+, _slider(nullptr)
 {
 
 }
@@ -49,24 +51,24 @@ ControlHuePicker::~ControlHuePicker()
     CC_SAFE_RELEASE(_slider);
 }
 
-ControlHuePicker* ControlHuePicker::create(Node* target, Point pos)
+ControlHuePicker* ControlHuePicker::create(Node* target, Vec2 pos)
 {
-    ControlHuePicker *pRet = new ControlHuePicker();
+    ControlHuePicker *pRet = new (std::nothrow) ControlHuePicker();
     pRet->initWithTargetAndPos(target, pos);
     pRet->autorelease();
     return pRet;
 }
 
 
-bool ControlHuePicker::initWithTargetAndPos(Node* target, Point pos)
+bool ControlHuePicker::initWithTargetAndPos(Node* target, Vec2 pos)
 {
     if (Control::init())
     {
         // Add background and slider sprites
-        this->setBackground(ControlUtils::addSpriteToTargetWithPosAndAnchor("huePickerBackground.png", target, pos, Point(0.0f, 0.0f)));
-        this->setSlider(ControlUtils::addSpriteToTargetWithPosAndAnchor("colourPicker.png", target, pos, Point(0.5f, 0.5f)));
+        this->setBackground(ControlUtils::addSpriteToTargetWithPosAndAnchor("huePickerBackground.png", target, pos, Vec2(0.0f, 0.0f)));
+        this->setSlider(ControlUtils::addSpriteToTargetWithPosAndAnchor("colourPicker.png", target, pos, Vec2(0.5f, 0.5f)));
         
-        _slider->setPosition(Point(pos.x, pos.y + _background->getBoundingBox().size.height * 0.5f));
+        _slider->setPosition(pos.x, pos.y + _background->getBoundingBox().size.height * 0.5f);
         _startPos=pos;
 
         // Sets the default value
@@ -111,20 +113,20 @@ void ControlHuePicker::setHuePercentage(float hueValueInPercent)
     // Set new position of the slider
     float x                 = centerX + limit * cosf(angle);
     float y                 = centerY + limit * sinf(angle);
-    _slider->setPosition(Point(x, y));
+    _slider->setPosition(x, y);
 
 }
 
 void ControlHuePicker::setEnabled(bool enabled)
 {
     Control::setEnabled(enabled);
-    if (_slider != NULL)
+    if (_slider != nullptr)
     {
         _slider->setOpacity(enabled ? 255 : 128);
     }
 }
 
-void ControlHuePicker::updateSliderPosition(Point location)
+void ControlHuePicker::updateSliderPosition(Vec2 location)
 {
 
     // Clamp the position of the icon within the circle
@@ -142,14 +144,14 @@ void ControlHuePicker::updateSliderPosition(Point location)
     float angle             = atan2f(dy, dx);
     float angleDeg          = CC_RADIANS_TO_DEGREES(angle) + 180.0f;
     
-    // use the position / slider width to determin the percentage the dragger is at
+    // use the position / slider width to determine the percentage the dragger is at
     setHue(angleDeg);
     
     // send Control callback
     sendActionsForControlEvents(Control::EventType::VALUE_CHANGED);
 }
 
-bool ControlHuePicker::checkSliderPosition(Point location)
+bool ControlHuePicker::checkSliderPosition(Vec2 location)
 {
     // compute the distance between the current location and the center
     double distance = sqrt(pow (location.x + 10, 2) + pow(location.y, 2));
@@ -163,7 +165,7 @@ bool ControlHuePicker::checkSliderPosition(Point location)
     return false;
 }
 
-bool ControlHuePicker::onTouchBegan(Touch* touch, Event* event)
+bool ControlHuePicker::onTouchBegan(Touch* touch, Event* /*event*/)
 {
     if (!isEnabled() || !isVisible())
     {
@@ -171,17 +173,17 @@ bool ControlHuePicker::onTouchBegan(Touch* touch, Event* event)
     }
     
     // Get the touch location
-    Point touchLocation=getTouchLocation(touch);
+    Vec2 touchLocation=getTouchLocation(touch);
 
     // Check the touch position on the slider
     return checkSliderPosition(touchLocation);
 }
 
 
-void ControlHuePicker::onTouchMoved(Touch* touch, Event* event)
+void ControlHuePicker::onTouchMoved(Touch* touch, Event* /*event*/)
 {
     // Get the touch location
-    Point touchLocation=getTouchLocation(touch);
+    Vec2 touchLocation=getTouchLocation(touch);
 
     //small modification: this allows changing of the colour, even if the touch leaves the bounding area
 //     updateSliderPosition(touchLocation);

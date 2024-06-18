@@ -1,5 +1,6 @@
 /****************************************************************************
- Copyright (c) 2013-2014 Chukong Technologies Inc.
+ Copyright (c) 2013-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -38,7 +39,7 @@ VBox::~VBox()
 
 VBox* VBox::create()
 {
-    VBox* widget = new VBox();
+    VBox* widget = new (std::nothrow) VBox();
     if (widget && widget->init())
     {
         widget->autorelease();
@@ -50,7 +51,7 @@ VBox* VBox::create()
 
 VBox* VBox::create(const cocos2d::Size &size)
 {
-    VBox* widget = new VBox();
+    VBox* widget = new (std::nothrow) VBox();
     if (widget && widget->initWithSize(size))
     {
         widget->autorelease();
@@ -64,7 +65,7 @@ bool VBox::init()
 {
     if (Layout::init())
     {
-        setLayoutType(LAYOUT_LINEAR_VERTICAL);
+        setLayoutType(Layout::Type::VERTICAL);
         return true;
     }
     return false;
@@ -74,7 +75,7 @@ bool VBox::initWithSize(const Size& size)
 {
     if (init())
     {
-        setSize(size);
+        setContentSize(size);
         return true;
     }
     return false;

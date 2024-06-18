@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2012      Pierre-David Bélanger
  * Copyright (c) 2012      cocos2d-x.org
- * Copyright (c) 2013-2014 Chukong Technologies Inc.
+ * Copyright (c) 2013-2016 Chukong Technologies Inc.
+ * Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  *
  * cocos2d-x: http://www.cocos2d-x.org
  *
@@ -24,64 +25,34 @@
  * THE SOFTWARE.
  *
  */
-
-#include "CCClippingNode.h"
-#include "kazmath/GL/matrix.h"
-#include "CCGLProgram.h"
-#include "CCShaderCache.h"
-#include "CCDirector.h"
-#include "CCDrawingPrimitives.h"
-
+#include "2d/CCClippingNode.h"
 #include "renderer/CCRenderer.h"
-#include "renderer/CCGroupCommand.h"
-#include "renderer/CCCustomCommand.h"
+#include "renderer/ccShaders.h"
+#include "renderer/backend/ProgramState.h"
+#include "base/CCDirector.h"
+#include "base/CCStencilStateManager.h"
 
 NS_CC_BEGIN
 
-static GLint g_sStencilBits = -1;
-// store the current stencil layer (position in the stencil buffer),
-// this will allow nesting up to n ClippingNode,
-// where n is the number of bits of the stencil buffer.
-static GLint s_layer = -1;
-
-static void setProgram(Node *n, GLProgram *p)
-{
-    n->setShaderProgram(p);
-    
-    auto& children = n->getChildren();
-    for(const auto &child : children) {
-        setProgram(child, p);
-    }
-}
-
 ClippingNode::ClippingNode()
 : _stencil(nullptr)
-, _alphaThreshold(0.0f)
-, _inverted(false)
-, _currentStencilEnabled(GL_FALSE)
-, _currentStencilWriteMask(~0)
-, _currentStencilFunc(GL_ALWAYS)
-, _currentStencilRef(0)
-, _currentStencilValueMask(~0)
-, _currentStencilFail(GL_KEEP)
-, _currentStencilPassDepthFail(GL_KEEP)
-, _currentStencilPassDepthPass(GL_KEEP)
-, _currentDepthWriteMask(GL_TRUE)
-,  _currentAlphaTestEnabled(GL_FALSE)
-, _currentAlphaTestFunc(GL_ALWAYS)
-, _currentAlphaTestRef(1)
+, _stencilStateManager(new StencilStateManager())
 {
-
 }
 
 ClippingNode::~ClippingNode()
 {
-    CC_SAFE_RELEASE(_stencil);
+    if (_stencil)
+    {
+        _stencil->stopAllActions();
+        _stencil->release();
+    }
+    CC_SAFE_DELETE(_stencilStateManager);
 }
 
 ClippingNode* ClippingNode::create()
 {
-    ClippingNode *ret = new ClippingNode();
+    ClippingNode *ret = new (std::nothrow) ClippingNode();
     if (ret && ret->init())
     {
         ret->autorelease();
@@ -96,7 +67,7 @@ ClippingNode* ClippingNode::create()
 
 ClippingNode* ClippingNode::create(Node *pStencil)
 {
-    ClippingNode *ret = new ClippingNode();
+    ClippingNode *ret = new (std::nothrow) ClippingNode();
     if (ret && ret->init(pStencil))
     {
         ret->autorelease();
@@ -116,29 +87,20 @@ bool ClippingNode::init()
 
 bool ClippingNode::init(Node *stencil)
 {
-    CC_SAFE_RELEASE(_stencil);
-    _stencil = stencil;
-    CC_SAFE_RETAIN(_stencil);
-    
-    _alphaThreshold = 1;
-    _inverted = false;
-    // get (only once) the number of bits of the stencil buffer
-    static bool once = true;
-    if (once)
-    {
-        glGetIntegerv(GL_STENCIL_BITS, &g_sStencilBits);
-        if (g_sStencilBits <= 0)
-        {
-            CCLOG("Stencil buffer is not enabled.");
-        }
-        once = false;
-    }
-    
+    setStencil(stencil);
     return true;
 }
 
 void ClippingNode::onEnter()
 {
+#if CC_ENABLE_SCRIPT_BINDING
+    if (_scriptType == kScriptTypeJavascript)
+    {
+        if (ScriptEngineManager::sendNodeEventToJSExtended(this, kNodeOnEnter))
+            return;
+    }
+#endif
+    
     Node::onEnter();
     
     if (_stencil != nullptr)
@@ -153,6 +115,14 @@ void ClippingNode::onEnter()
 
 void ClippingNode::onEnterTransitionDidFinish()
 {
+#if CC_ENABLE_SCRIPT_BINDING
+    if (_scriptType == kScriptTypeJavascript)
+    {
+        if (ScriptEngineManager::sendNodeEventToJSExtended(this, kNodeOnEnterTransitionDidFinish))
+            return;
+    }
+#endif
+    
     Node::onEnterTransitionDidFinish();
     
     if (_stencil != nullptr)
@@ -163,6 +133,14 @@ void ClippingNode::onEnterTransitionDidFinish()
 
 void ClippingNode::onExitTransitionDidStart()
 {
+#if CC_ENABLE_SCRIPT_BINDING
+    if (_scriptType == kScriptTypeJavascript)
+    {
+        if (ScriptEngineManager::sendNodeEventToJSExtended(this, kNodeOnExitTransitionDidStart))
+            return;
+    }
+#endif
+    
     if (_stencil != nullptr)
     {
         _stencil->onExitTransitionDidStart();
@@ -173,6 +151,14 @@ void ClippingNode::onExitTransitionDidStart()
 
 void ClippingNode::onExit()
 {
+#if CC_ENABLE_SCRIPT_BINDING
+    if (_scriptType == kScriptTypeJavascript)
+    {
+        if (ScriptEngineManager::sendNodeEventToJSExtended(this, kNodeOnExit))
+            return;
+    }
+#endif
+    
     if (_stencil != nullptr)
     {
         _stencil->onExit();
@@ -181,107 +167,105 @@ void ClippingNode::onExit()
     Node::onExit();
 }
 
-void ClippingNode::drawFullScreenQuadClearStencil()
-{
-    kmGLMatrixMode(KM_GL_MODELVIEW);
-    kmGLPushMatrix();
-    kmGLLoadIdentity();
-    
-    kmGLMatrixMode(KM_GL_PROJECTION);
-    kmGLPushMatrix();
-    kmGLLoadIdentity();
-    
-    DrawPrimitives::drawSolidRect(Point(-1,-1), Point(1,1), Color4F(1, 1, 1, 1));
-    
-    kmGLMatrixMode(KM_GL_PROJECTION);
-    kmGLPopMatrix();
-    kmGLMatrixMode(KM_GL_MODELVIEW);
-    kmGLPopMatrix();
-}
 
-void ClippingNode::visit(Renderer *renderer, const kmMat4 &parentTransform, bool parentTransformUpdated)
+void ClippingNode::visit(Renderer *renderer, const Mat4 &parentTransform, uint32_t parentFlags)
 {
-    if(!_visible)
+    if (!_visible || !hasContent())
         return;
     
-    bool dirty = parentTransformUpdated || _transformUpdated;
-    if(dirty)
-        _modelViewTransform = transform(parentTransform);
-    _transformUpdated = false;
+    uint32_t flags = processParentFlags(parentTransform, parentFlags);
 
     // IMPORTANT:
-    // To ease the migration to v3.0, we still support the kmGL stack,
+    // To ease the migration to v3.0, we still support the Mat4 stack,
     // but it is deprecated and your code should not rely on it
-    kmGLPushMatrix();
-    kmGLLoadMatrix(&_modelViewTransform);
+    Director* director = Director::getInstance();
+    CCASSERT(nullptr != director, "Director is null when setting matrix stack");
+    director->pushMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
+    director->loadMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW, _modelViewTransform);
 
     //Add group command
         
-    _groupCommand.init(_globalZOrder);
-    renderer->addCommand(&_groupCommand);
+    _groupCommandStencil.init(_globalZOrder);
+    renderer->addCommand(&_groupCommandStencil);
 
-    renderer->pushGroup(_groupCommand.getRenderQueueID());
+    renderer->pushGroup(_groupCommandStencil.getRenderQueueID());
 
-    _beforeVisitCmd.init(_globalZOrder);
-    _beforeVisitCmd.func = CC_CALLBACK_0(ClippingNode::onBeforeVisit, this);
-    renderer->addCommand(&_beforeVisitCmd);
-    if (_alphaThreshold < 1)
+    // _beforeVisitCmd.init(_globalZOrder);
+    // _beforeVisitCmd.func = CC_CALLBACK_0(StencilStateManager::onBeforeVisit, _stencilStateManager);
+    // renderer->addCommand(&_beforeVisitCmd);
+    _stencilStateManager->onBeforeVisit(_globalZOrder);
+    
+    auto alphaThreshold = this->getAlphaThreshold();
+    if (alphaThreshold < 1)
     {
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_MAC || CC_TARGET_PLATFORM == CC_PLATFORM_WINDOWS || CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-#else
-        // since glAlphaTest do not exists in OES, use a shader that writes
-        // pixel only if greater than an alpha threshold
-        GLProgram *program = ShaderCache::getInstance()->getProgram(GLProgram::SHADER_NAME_POSITION_TEXTURE_ALPHA_TEST_NO_MV);
-        GLint alphaValueLocation = glGetUniformLocation(program->getProgram(), GLProgram::UNIFORM_NAME_ALPHA_TEST_VALUE);
-        // set our alphaThreshold
-        program->use();
-        program->setUniformLocationWith1f(alphaValueLocation, _alphaThreshold);
-        // we need to recursively apply this shader to all the nodes in the stencil node
-        // XXX: we should have a way to apply shader to all nodes without having to do this
-        setProgram(_stencil, program);
-        
-#endif
+        auto* program = backend::Program::getBuiltinProgram(backend::ProgramType::POSITION_TEXTURE_COLOR_ALPHA_TEST);
+        auto programState = new (std::nothrow) backend::ProgramState(program);
+        auto alphaLocation = programState->getUniformLocation("u_alpha_value");
+        programState->setUniform(alphaLocation, &alphaThreshold, sizeof(alphaThreshold));
+        setProgramStateRecursively(_stencil, programState);
 
+        CC_SAFE_RELEASE_NULL(programState);
     }
-    _stencil->visit(renderer, _modelViewTransform, dirty);
+    _stencil->visit(renderer, _modelViewTransform, flags);
 
     _afterDrawStencilCmd.init(_globalZOrder);
-    _afterDrawStencilCmd.func = CC_CALLBACK_0(ClippingNode::onAfterDrawStencil, this);
+    _afterDrawStencilCmd.func = CC_CALLBACK_0(StencilStateManager::onAfterDrawStencil, _stencilStateManager);
     renderer->addCommand(&_afterDrawStencilCmd);
 
     int i = 0;
+    bool visibleByCamera = isVisitableByVisitingCamera();
     
+
+    // `_groupCommandChildren` is used as a barrier
+    // to ensure commands above be executed before children nodes
+    _groupCommandChildren.init(_globalZOrder);
+    renderer->addCommand(&_groupCommandChildren);
+
+    renderer->pushGroup(_groupCommandChildren.getRenderQueueID());
+
     if(!_children.empty())
     {
         sortAllChildren();
         // draw children zOrder < 0
-        for( ; i < _children.size(); i++ )
+        for(auto size = _children.size(); i < size; ++i)
         {
             auto node = _children.at(i);
             
             if ( node && node->getLocalZOrder() < 0 )
-                node->visit(renderer, _modelViewTransform, dirty);
+                node->visit(renderer, _modelViewTransform, flags);
             else
                 break;
         }
         // self draw
-        this->draw(renderer, _modelViewTransform, dirty);
-        
-        for(auto it=_children.cbegin()+i; it != _children.cend(); ++it)
-            (*it)->visit(renderer, _modelViewTransform, dirty);
+        if (visibleByCamera)
+            this->draw(renderer, _modelViewTransform, flags);
+
+        for(auto it=_children.cbegin()+i, itCend = _children.cend(); it != itCend; ++it)
+            (*it)->visit(renderer, _modelViewTransform, flags);
     }
-    else
+    else if (visibleByCamera)
     {
-        this->draw(renderer, _modelViewTransform, dirty);
+        this->draw(renderer, _modelViewTransform, flags);
     }
 
+
+    renderer->popGroup();
+
     _afterVisitCmd.init(_globalZOrder);
-    _afterVisitCmd.func = CC_CALLBACK_0(ClippingNode::onAfterVisit, this);
+    _afterVisitCmd.func = CC_CALLBACK_0(StencilStateManager::onAfterVisit, _stencilStateManager);
     renderer->addCommand(&_afterVisitCmd);
 
     renderer->popGroup();
     
-    kmGLPopMatrix();
+    director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
+}
+
+void ClippingNode::setCameraMask(unsigned short mask, bool applyChildren)
+{
+    Node::setCameraMask(mask, applyChildren);
+    
+    if (_stencil)
+        _stencil->setCameraMask(mask, applyChildren);
 }
 
 Node* ClippingNode::getStencil() const
@@ -291,182 +275,102 @@ Node* ClippingNode::getStencil() const
 
 void ClippingNode::setStencil(Node *stencil)
 {
-    CC_SAFE_RELEASE(_stencil);
+    //early out if the stencil is already set
+    if (_stencil == stencil)
+        return;
+    
+#if CC_ENABLE_GC_FOR_NATIVE_OBJECTS
+    auto sEngine = ScriptEngineManager::getInstance()->getScriptEngine();
+    if (sEngine)
+    {
+        if (_stencil)
+            sEngine->releaseScriptObject(this, _stencil);
+        if (stencil)
+            sEngine->retainScriptObject(this, stencil);
+    }
+#endif // CC_ENABLE_GC_FOR_NATIVE_OBJECTS
+    
+    //cleanup current stencil
+    if(_stencil != nullptr && _stencil->isRunning())
+    {
+        _stencil->onExitTransitionDidStart();
+        _stencil->onExit();
+    }
+    CC_SAFE_RELEASE_NULL(_stencil);
+    
+    //initialise new stencil
     _stencil = stencil;
     CC_SAFE_RETAIN(_stencil);
+    if(_stencil != nullptr && this->isRunning())
+    {
+        _stencil->onEnter();
+        if(this->_isTransitionFinished)
+        {
+            _stencil->onEnterTransitionDidFinish();
+        }
+    }
+
+    if (_stencil != nullptr)
+    {
+        _originalStencilProgramState[_stencil] = _stencil->getProgramState();
+        auto& children = _stencil->getChildren();
+        for (const auto &child : children) {
+            _originalStencilProgramState[child] = child->getProgramState();
+        }
+    }
 }
 
-GLfloat ClippingNode::getAlphaThreshold() const
+bool ClippingNode::hasContent() const
 {
-    return _alphaThreshold;
+    return _children.size() > 0;
 }
 
-void ClippingNode::setAlphaThreshold(GLfloat alphaThreshold)
+float ClippingNode::getAlphaThreshold() const
 {
-    _alphaThreshold = alphaThreshold;
+    return _stencilStateManager->getAlphaThreshold();
+}
+
+void ClippingNode::setAlphaThreshold(float alphaThreshold)
+{
+    if (alphaThreshold == 1 && alphaThreshold != _stencilStateManager->getAlphaThreshold())
+    {
+        // should reset program used by _stencil
+        if (_stencil)
+            restoreAllProgramStates();
+    }
+    _stencilStateManager->setAlphaThreshold(alphaThreshold);
 }
 
 bool ClippingNode::isInverted() const
 {
-    return _inverted;
+    return _stencilStateManager->isInverted();
 }
 
 void ClippingNode::setInverted(bool inverted)
 {
-    _inverted = inverted;
+    _stencilStateManager->setInverted(inverted);
 }
 
-void ClippingNode::onBeforeVisit()
+void ClippingNode::setProgramStateRecursively(Node* node, backend::ProgramState* programState)
 {
-    ///////////////////////////////////
-    // INIT
+    _originalStencilProgramState[node] = node->getProgramState();
+    node->setProgramState(programState);
 
-    // increment the current layer
-    s_layer++;
-
-    // mask of the current layer (ie: for layer 3: 00000100)
-    GLint mask_layer = 0x1 << s_layer;
-    // mask of all layers less than the current (ie: for layer 3: 00000011)
-    GLint mask_layer_l = mask_layer - 1;
-    // mask of all layers less than or equal to the current (ie: for layer 3: 00000111)
-    _mask_layer_le = mask_layer | mask_layer_l;
-
-    // manually save the stencil state
-
-    _currentStencilEnabled = glIsEnabled(GL_STENCIL_TEST);
-    glGetIntegerv(GL_STENCIL_WRITEMASK, (GLint *)&_currentStencilWriteMask);
-    glGetIntegerv(GL_STENCIL_FUNC, (GLint *)&_currentStencilFunc);
-    glGetIntegerv(GL_STENCIL_REF, &_currentStencilRef);
-    glGetIntegerv(GL_STENCIL_VALUE_MASK, (GLint *)&_currentStencilValueMask);
-    glGetIntegerv(GL_STENCIL_FAIL, (GLint *)&_currentStencilFail);
-    glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, (GLint *)&_currentStencilPassDepthFail);
-    glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, (GLint *)&_currentStencilPassDepthPass);
-
-    // enable stencil use
-    glEnable(GL_STENCIL_TEST);
-    // check for OpenGL error while enabling stencil test
-    CHECK_GL_ERROR_DEBUG();
-
-    // all bits on the stencil buffer are readonly, except the current layer bit,
-    // this means that operation like glClear or glStencilOp will be masked with this value
-    glStencilMask(mask_layer);
-
-    // manually save the depth test state
-
-    glGetBooleanv(GL_DEPTH_WRITEMASK, &_currentDepthWriteMask);
-
-    // disable depth test while drawing the stencil
-    //glDisable(GL_DEPTH_TEST);
-    // disable update to the depth buffer while drawing the stencil,
-    // as the stencil is not meant to be rendered in the real scene,
-    // it should never prevent something else to be drawn,
-    // only disabling depth buffer update should do
-    glDepthMask(GL_FALSE);
-
-    ///////////////////////////////////
-    // CLEAR STENCIL BUFFER
-
-    // manually clear the stencil buffer by drawing a fullscreen rectangle on it
-    // setup the stencil test func like this:
-    // for each pixel in the fullscreen rectangle
-    //     never draw it into the frame buffer
-    //     if not in inverted mode: set the current layer value to 0 in the stencil buffer
-    //     if in inverted mode: set the current layer value to 1 in the stencil buffer
-    glStencilFunc(GL_NEVER, mask_layer, mask_layer);
-    glStencilOp(!_inverted ? GL_ZERO : GL_REPLACE, GL_KEEP, GL_KEEP);
-
-    // draw a fullscreen solid rectangle to clear the stencil buffer
-    //ccDrawSolidRect(Point::ZERO, ccpFromSize([[Director sharedDirector] winSize]), Color4F(1, 1, 1, 1));
-    drawFullScreenQuadClearStencil();
-
-    ///////////////////////////////////
-    // DRAW CLIPPING STENCIL
-
-    // setup the stencil test func like this:
-    // for each pixel in the stencil node
-    //     never draw it into the frame buffer
-    //     if not in inverted mode: set the current layer value to 1 in the stencil buffer
-    //     if in inverted mode: set the current layer value to 0 in the stencil buffer
-    glStencilFunc(GL_NEVER, mask_layer, mask_layer);
-    glStencilOp(!_inverted ? GL_REPLACE : GL_ZERO, GL_KEEP, GL_KEEP);
-
-    // enable alpha test only if the alpha threshold < 1,
-    // indeed if alpha threshold == 1, every pixel will be drawn anyways
-    if (_alphaThreshold < 1) {
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_MAC || CC_TARGET_PLATFORM == CC_PLATFORM_WINDOWS || CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        // manually save the alpha test state
-        _currentAlphaTestEnabled = glIsEnabled(GL_ALPHA_TEST);
-        glGetIntegerv(GL_ALPHA_TEST_FUNC, (GLint *)&_currentAlphaTestFunc);
-        glGetFloatv(GL_ALPHA_TEST_REF, &_currentAlphaTestRef);
-        // enable alpha testing
-        glEnable(GL_ALPHA_TEST);
-        // check for OpenGL error while enabling alpha test
-        CHECK_GL_ERROR_DEBUG();
-        // pixel will be drawn only if greater than an alpha threshold
-        glAlphaFunc(GL_GREATER, _alphaThreshold);
-#else
-        
-#endif
+    auto& children = node->getChildren();
+    for (const auto &child : children) {
+        setProgramStateRecursively(child, programState);
     }
-
-    //Draw _stencil
 }
 
-void ClippingNode::onAfterDrawStencil()
+void ClippingNode::restoreAllProgramStates()
 {
-    // restore alpha test state
-    if (_alphaThreshold < 1)
+    for (auto item : _originalStencilProgramState)
     {
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_MAC || CC_TARGET_PLATFORM == CC_PLATFORM_WINDOWS || CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        // manually restore the alpha test state
-        glAlphaFunc(_currentAlphaTestFunc, _currentAlphaTestRef);
-        if (!_currentAlphaTestEnabled)
-        {
-            glDisable(GL_ALPHA_TEST);
-        }
-#else
-// XXX: we need to find a way to restore the shaders of the stencil node and its childs
-#endif
+        auto node = item.first;
+        auto programState = item.second;
+        node->setProgramState(programState);
     }
-
-    // restore the depth test state
-    glDepthMask(_currentDepthWriteMask);
-    //if (currentDepthTestEnabled) {
-    //    glEnable(GL_DEPTH_TEST);
-    //}
-
-    ///////////////////////////////////
-    // DRAW CONTENT
-
-    // setup the stencil test func like this:
-    // for each pixel of this node and its childs
-    //     if all layers less than or equals to the current are set to 1 in the stencil buffer
-    //         draw the pixel and keep the current layer in the stencil buffer
-    //     else
-    //         do not draw the pixel but keep the current layer in the stencil buffer
-    glStencilFunc(GL_EQUAL, _mask_layer_le, _mask_layer_le);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-    // draw (according to the stencil test func) this node and its childs
 }
 
-
-void ClippingNode::onAfterVisit()
-{
-    ///////////////////////////////////
-    // CLEANUP
-
-    // manually restore the stencil state
-    glStencilFunc(_currentStencilFunc, _currentStencilRef, _currentStencilValueMask);
-    glStencilOp(_currentStencilFail, _currentStencilPassDepthFail, _currentStencilPassDepthPass);
-    glStencilMask(_currentStencilWriteMask);
-    if (!_currentStencilEnabled)
-    {
-        glDisable(GL_STENCIL_TEST);
-    }
-
-    // we are done using this layer, decrement
-    s_layer--;
-}
 
 NS_CC_END

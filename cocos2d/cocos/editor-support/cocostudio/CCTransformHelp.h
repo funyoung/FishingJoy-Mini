@@ -1,5 +1,6 @@
-/****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+﻿/****************************************************************************
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -25,8 +26,9 @@ THE SOFTWARE.
 #ifndef __CCTRANSFORMHELP_H__
 #define __CCTRANSFORMHELP_H__
 
-#include "cocostudio/CCArmatureDefine.h"
-#include "cocostudio/CCDatas.h"
+#include "editor-support/cocostudio/CCArmatureDefine.h"
+#include "editor-support/cocostudio/CCDatas.h"
+#include "editor-support/cocostudio/CocosStudioExport.h"
 
 namespace cocostudio {
 
@@ -35,7 +37,7 @@ namespace cocostudio {
  * @js NA
  * @lua NA
  */
-class  TransformHelp
+class CC_STUDIO_DLL TransformHelp
 {
 public:
     TransformHelp();
@@ -47,9 +49,9 @@ public:
     static void transformToParentWithoutScale(BaseData &node, const BaseData &parentNode);
 
     static void nodeToMatrix(const BaseData &_node, cocos2d::AffineTransform &_matrix);
-    static void nodeToMatrix(const BaseData &node, kmMat4 &matrix);
+    static void nodeToMatrix(const BaseData &node, cocos2d::Mat4 &matrix);
     static void matrixToNode(const cocos2d::AffineTransform &_matrix, BaseData &_node);
-    static void matrixToNode(const kmMat4 &_matrix, BaseData &_node);
+    static void matrixToNode(const cocos2d::Mat4 &_matrix, BaseData &_node);
 
     static void nodeConcat(BaseData &target, BaseData &source);
     static void nodeSub(BaseData &target, BaseData &source);
@@ -57,8 +59,8 @@ public:
     static cocos2d::AffineTransform helpMatrix1;
     static cocos2d::AffineTransform helpMatrix2;
 
-    static cocos2d::Point helpPoint1;
-    static cocos2d::Point helpPoint2;
+    static cocos2d::Vec2 helpPoint1;
+    static cocos2d::Vec2 helpPoint2;
 };
 
 }

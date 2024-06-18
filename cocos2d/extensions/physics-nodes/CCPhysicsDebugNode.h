@@ -1,5 +1,6 @@
 /* Copyright (c) 2012 Scott Lembcke and Howling Moon Software
  * Copyright (c) 2012 cocos2d-x.org
+ * Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +25,24 @@
 #define __PHYSICSNODES_DEBUGNODE_H__
 
 #include "extensions/ExtensionMacros.h"
-#include "CCDrawNode.h"
+#include "2d/CCDrawNode.h"
+#include "extensions/ExtensionExport.h"
 
 struct cpSpace;
 
 NS_CC_EXT_BEGIN
 
 /**
- A BaseData that draws the components of a physics engine.
+ * A BaseData that draws the components of a physics engine.
  
- Supported physics engines:
- - Chipmunk
- - Objective-Chipmunk
- 
- @since v2.1
+ * Supported physics engines:
+ * - Chipmunk
+ * - Objective-Chipmunk
+ * @since v2.1
+ * @lua NA
  */
 
-class PhysicsDebugNode : public DrawNode
+class CC_EX_DLL PhysicsDebugNode : public DrawNode
 {
 
 public:
@@ -52,7 +54,6 @@ public:
     PhysicsDebugNode();
     /**
      * @js NA
-     * @lua NA
      */
     virtual ~PhysicsDebugNode();
     
@@ -61,7 +62,7 @@ public:
     void setSpace(cpSpace *space);
     
     // Overrides
-    virtual void draw(Renderer *renderer, const kmMat4 &transform, bool transformUpdated) override;
+    virtual void draw(Renderer *renderer, const Mat4 &transform, uint32_t flags) override;
 
 protected:
     cpSpace *_spacePtr;

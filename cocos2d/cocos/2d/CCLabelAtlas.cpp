@@ -2,7 +2,8 @@
 Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2011      Zynga Inc.
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -24,21 +25,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
-#include "CCLabelAtlas.h"
-#include "CCTextureAtlas.h"
-#include "CCTextureCache.h"
-#include "CCDrawingPrimitives.h"
-#include "ccConfig.h"
-#include "CCShaderCache.h"
-#include "CCGLProgram.h"
-#include "ccGLStateCache.h"
-#include "CCDirector.h"
-#include "TransformUtils.h"
-#include "CCInteger.h"
+#include "2d/CCLabelAtlas.h"
+#include "renderer/CCTextureAtlas.h"
 #include "platform/CCFileUtils.h"
-// external
-#include "kazmath/GL/matrix.h"
-#include "CCString.h"
+#include "base/CCDirector.h"
+#include "base/ccUTF8.h"
+#include "renderer/CCTextureCache.h"
+
+#if CC_LABELATLAS_DEBUG_DRAW
+#include "renderer/CCRenderer.h"
+#endif
 
 NS_CC_BEGIN
 
@@ -46,7 +42,7 @@ NS_CC_BEGIN
 
 LabelAtlas* LabelAtlas::create()
 {
-    LabelAtlas* ret = new LabelAtlas();
+    LabelAtlas* ret = new (std::nothrow) LabelAtlas();
     if (ret)
     {
         ret->autorelease();
@@ -61,7 +57,7 @@ LabelAtlas* LabelAtlas::create()
 
 LabelAtlas* LabelAtlas::create(const std::string& string, const std::string& charMapFile, int itemWidth, int itemHeight, int startCharMap)
 {
-    LabelAtlas* ret = new LabelAtlas();
+    LabelAtlas* ret = new (std::nothrow) LabelAtlas();
     if(ret && ret->initWithString(string, charMapFile, itemWidth, itemHeight, startCharMap))
     {
         ret->autorelease();
@@ -74,7 +70,7 @@ LabelAtlas* LabelAtlas::create(const std::string& string, const std::string& cha
 bool LabelAtlas::initWithString(const std::string& string, const std::string& charMapFile, int itemWidth, int itemHeight, int startCharMap)
 {
     Texture2D *texture = Director::getInstance()->getTextureCache()->addImage(charMapFile);
-	return initWithString(string, texture, itemWidth, itemHeight, startCharMap);
+    return initWithString(string, texture, itemWidth, itemHeight, startCharMap);
 }
 
 bool LabelAtlas::initWithString(const std::string& string, Texture2D* texture, int itemWidth, int itemHeight, int startCharMap)
@@ -90,7 +86,7 @@ bool LabelAtlas::initWithString(const std::string& string, Texture2D* texture, i
 
 LabelAtlas* LabelAtlas::create(const std::string& string, const std::string& fntFile)
 {    
-    LabelAtlas *ret = new LabelAtlas();
+    LabelAtlas *ret = new (std::nothrow) LabelAtlas();
     if (ret)
     {
         if (ret->initWithString(string, fntFile))
@@ -109,9 +105,9 @@ LabelAtlas* LabelAtlas::create(const std::string& string, const std::string& fnt
 bool LabelAtlas::initWithString(const std::string& theString, const std::string& fntFile)
 {
     std::string pathStr = FileUtils::getInstance()->fullPathForFilename(fntFile);
-    std::string relPathStr = pathStr.substr(0, pathStr.find_last_of("/"))+"/";
+    std::string relPathStr = pathStr.substr(0, pathStr.find_last_of('/'))+"/";
     
-    ValueMap dict = FileUtils::getInstance()->getValueMapFromFile(pathStr.c_str());
+    ValueMap dict = FileUtils::getInstance()->getValueMapFromFile(pathStr);
 
     CCASSERT(dict["version"].asInt() == 1, "Unsupported version. Upgrade cocos2d version");
 
@@ -122,7 +118,7 @@ bool LabelAtlas::initWithString(const std::string& theString, const std::string&
     unsigned int startChar = dict["firstChar"].asInt();
 
 
-    this->initWithString(theString, textureFilename.c_str(), width, height, startChar);
+    this->initWithString(theString, textureFilename, width, height, startChar);
 
     return true;
 }
@@ -130,6 +126,11 @@ bool LabelAtlas::initWithString(const std::string& theString, const std::string&
 //CCLabelAtlas - Atlas generation
 void LabelAtlas::updateAtlasValues()
 {
+    if(_itemsPerRow == 0)
+    {
+        return;
+    }
+
     ssize_t n = _string.length();
 
     const unsigned char *s = (unsigned char*)_string.c_str();
@@ -221,7 +222,7 @@ void LabelAtlas::setString(const std::string &label)
     _quadsToDraw = len;
 }
 
-const std::string& LabelAtlas::getString(void) const
+const std::string& LabelAtlas::getString() const
 {
     return _string;
 }
@@ -231,6 +232,12 @@ void LabelAtlas::updateColor()
     if (_textureAtlas)
     {
         Color4B color4( _displayedColor.r, _displayedColor.g, _displayedColor.b, _displayedOpacity );
+        if (_isOpacityModifyRGB)
+        {
+            color4.r *= _displayedOpacity/255.0f;
+            color4.g *= _displayedOpacity/255.0f;
+            color4.b *= _displayedOpacity/255.0f;
+        }
         auto quads = _textureAtlas->getQuads();
         ssize_t length = _string.length();
         for (int index = 0; index < length; index++)
@@ -245,18 +252,21 @@ void LabelAtlas::updateColor()
 }
 
 //CCLabelAtlas - draw
-
-#if CC_LABELATLAS_DEBUG_DRAW    
-void LabelAtlas::draw()
+#if CC_LABELATLAS_DEBUG_DRAW
+void LabelAtlas::draw(Renderer *renderer, const Mat4 &transform, uint32_t flags)
 {
-    AtlasNode::draw();
+    AtlasNode::draw(renderer, transform, _transformUpdated);
 
-    const Size& s = this->getContentSize();
-    Point vertices[4]={
-        Point(0,0),Point(s.width,0),
-        Point(s.width,s.height),Point(0,s.height),
+    _debugDrawNode->clear();
+    auto size = getContentSize();
+    Vec2 vertices[4]=
+    {
+        Vec2::ZERO,
+        Vec2(size.width, 0),
+        Vec2(size.width, size.height),
+        Vec2(0.0f, size.height)
     };
-    ccDrawPoly(vertices, 4, true);
+    _debugDrawNode->drawPoly(vertices, 4, true, Color4F(1.0, 1.0, 1.0, 1.0));
 }
 #endif
 

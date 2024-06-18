@@ -1,5 +1,6 @@
 /****************************************************************************
- Copyright (c) 2013-2014 Chukong Technologies Inc.
+ Copyright (c) 2013-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -38,7 +39,7 @@ HBox::~HBox()
     
 HBox* HBox::create()
 {
-    HBox* widget = new HBox();
+    HBox* widget = new (std::nothrow) HBox();
     if (widget && widget->init())
     {
         widget->autorelease();
@@ -50,7 +51,7 @@ HBox* HBox::create()
     
 HBox* HBox::create(const cocos2d::Size &size)
 {
-    HBox* widget = new HBox();
+    HBox* widget = new (std::nothrow) HBox();
     if (widget && widget->initWithSize(size))
     {
         widget->autorelease();
@@ -64,7 +65,7 @@ bool HBox::init()
 {
     if (Layout::init())
     {
-        setLayoutType(LAYOUT_LINEAR_HORIZONTAL);
+        setLayoutType(Layout::Type::HORIZONTAL);
         return true;
     }
     return false;
@@ -74,7 +75,7 @@ bool HBox::initWithSize(const Size& size)
 {
     if (init())
     {
-        setSize(size);
+        setContentSize(size);
         return true;
     }
     return false;

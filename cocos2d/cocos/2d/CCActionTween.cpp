@@ -1,7 +1,8 @@
 /****************************************************************************
 Copyright (c) 2009      lhunath (Maarten Billemont)
 Copyright (c) 2010-2012 cocos2d-x.org
-CopyRight (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
 http://www.cocos2d-x.org
 
@@ -24,22 +25,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "CCActionTween.h"
+#include "2d/CCActionTween.h"
 
 NS_CC_BEGIN
 
-ActionTween* ActionTween::create(float aDuration, const std::string& key, float from, float to)
+ActionTween* ActionTween::create(float duration, const std::string& key, float from, float to)
 {
-    ActionTween* ret = new ActionTween();
-    if (ret && ret->initWithDuration(aDuration, key, from, to))
+    ActionTween* ret = new (std::nothrow) ActionTween();
+    if (ret && ret->initWithDuration(duration, key, from, to))
     {
         ret->autorelease();
+        return ret;
     }
-    else
-    {
-        CC_SAFE_DELETE(ret);
-    }
-    return ret;
+    
+    delete ret;
+    return nullptr;
 }
 
 bool ActionTween::initWithDuration(float duration, const std::string& key, float from, float to)
@@ -57,11 +57,7 @@ bool ActionTween::initWithDuration(float duration, const std::string& key, float
 
 ActionTween *ActionTween::clone() const
 {
-	// no copy constructor	
-	auto a = new ActionTween();
-	a->initWithDuration(_duration, _key.c_str(), _from, _to);
-	a->autorelease();
-	return a;
+    return ActionTween::create(_duration, _key, _from, _to);
 }
 
 void ActionTween::startWithTarget(Node *target)
@@ -73,12 +69,12 @@ void ActionTween::startWithTarget(Node *target)
 
 void ActionTween::update(float dt)
 {
-    dynamic_cast<ActionTweenDelegate*>(_target)->updateTweenAction(_to  - _delta * (1 - dt), _key.c_str());
+    dynamic_cast<ActionTweenDelegate*>(_target)->updateTweenAction(_to  - _delta * (1 - dt), _key);
 }
 
 ActionTween* ActionTween::reverse() const
 {
-    return ActionTween::create(_duration, _key.c_str(), _to, _from);
+    return ActionTween::create(_duration, _key, _to, _from);
 }
 
 
