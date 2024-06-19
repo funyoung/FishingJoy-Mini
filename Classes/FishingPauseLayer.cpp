@@ -40,7 +40,7 @@ void FishingPauseLayer::continueEvent(Ref* target, ui::Widget::TouchEventType ty
 		auto background = (Sprite*)(getParent()->getChildByTag(101)->getChildByTag(102));
 		background->setTexture("CocoStudioRes/background.jpg");
 		background->setScale(1.0f);
-		background->setZOrder(-1.0f);
+		background->setLocalZOrder(-1.0f);
         
 		//Resume all the action and touch events
 		getParent()->getChildByTag(101)->onEnter();

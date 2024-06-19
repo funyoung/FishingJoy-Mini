@@ -96,12 +96,12 @@ void FishingLayer::shootEvent(Ref* target, ui::Widget::TouchEventType type){
 	if(type ==  ui::Widget::TouchEventType::BEGAN){
         
 		//Change the texture of the cannot at the beginning of touch to make it more real
-		cannon->loadTexture("actor_cannon1_72.png", UI_TEX_TYPE_PLIST);
+		cannon->loadTexture("actor_cannon1_72.png", ui::Widget::TextureResType::PLIST);
 		
 	}else if(type ==  ui::Widget::TouchEventType::ENDED){
 		
 		//Change back the texture of the cannon at the end of the touch event
-		cannon->loadTexture("actor_cannon1_71.png", UI_TEX_TYPE_PLIST);
+		cannon->loadTexture("actor_cannon1_71.png", ui::Widget::TextureResType::PLIST);
 		
 		//Change the cannon rotation
 		FishingLayer::setCannonRotation(target,target->getTouchEndPos());
@@ -235,7 +235,7 @@ void FishingLayer::pauseEvent(Ref* target, ui::Widget::TouchEventType type){
 		background->setTexture("GameScene/bgblur01_01-hd.png");
 		background->setScaleX(winSize.width/background->getContentSize().width);
 		background->setScaleY(winSize.height/background->getContentSize().height);
-		background->setZOrder(2);
+		background->setLocalZOrder(2);
         
 		//Create the pause layer
 		auto pauseLayer = FishingPauseLayer::create();
