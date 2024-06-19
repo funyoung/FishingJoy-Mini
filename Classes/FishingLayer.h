@@ -13,11 +13,11 @@
 #include <cstdlib>
 #include "MainMenuLayer.h"
 #include "FishingPauseLayer.h"
-#include "SimpleAudioEngine.h"
+//#include "SimpleAudioEngine.h"
 #include "extensions/cocos-ext.h"
 #include "ui/CocosGUI.h"
 //#include "AppDelegate.h"
-#include "CCScene.h"
+//#include "CCScene.h"
 
 USING_NS_CC;
 USING_NS_CC_EXT;

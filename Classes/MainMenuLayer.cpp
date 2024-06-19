@@ -7,7 +7,7 @@
 //
 
 #include "MainMenuLayer.h"
-#include "SimpleAudioEngine.h"
+//#include "SimpleAudioEngine.h"
 
 // android effect only support ogg
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
@@ -23,7 +23,8 @@ bool MainMenuLayer::init(){
 	
 	//Set the background picture
 	auto ui_background = Sprite::create("MainMenu/ui_background_normal-hd.png");
-	ui_background->setAnchorPoint(ccp(0.0f,0.0f));
+    // TODO: setAnchorPoint的cpp(0.0f,0.0f)和直接用Point的差别
+	ui_background->setAnchorPoint(Point(0.0f,0.0f));
 	ui_background->setPosition(Point(0.0f,0.0f));
 	addChild(ui_background,0.0f);
 	
@@ -80,9 +81,11 @@ bool MainMenuLayer::init(){
     /**Preload background music
        set default volume
 	   Play background music.**/
-    CocosDenshion::SimpleAudioEngine::getInstance()->preloadBackgroundMusic(BG_MUSIC);
-    CocosDenshion::SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(0.5);
-	CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic(BG_MUSIC, true);
+#if USE_AUDIO_ENGINE
+//    CocosDenshion::SimpleAudioEngine::getInstance()->preloadBackgroundMusic(BG_MUSIC);
+//    CocosDenshion::SimpleAudioEngine::getInstance()->setBackgroundMusicVolume(0.5);
+//	CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic(BG_MUSIC, true);
+#endif
 	
 	return true;
 }

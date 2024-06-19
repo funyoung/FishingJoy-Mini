@@ -83,10 +83,12 @@ bool FishingLayer::init(){
 	
 	//Update the fishes one time
 	updateFishMovement();
-	
+
+#if USE_AUDIO_ENGINE
 	//Preload background effect
-    CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect(SOUND_COIN);
-    CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect(SOUND_FIRE);
+    AudioEngine::preload(SOUND_COIN);
+    AudioEngine::preload(SOUND_FIRE);
+#endif
 	
 	return true;
 }
@@ -102,19 +104,22 @@ void FishingLayer::shootEvent(Ref* target, ui::Widget::TouchEventType type){
 		
 		//Change back the texture of the cannon at the end of the touch event
 		cannon->loadTexture("actor_cannon1_71.png", ui::Widget::TextureResType::PLIST);
-		
+
+        // TODO: 这里把Ref*强转成Widget*会不会出问题
+        Widget* pWidget = ((Widget*)target);
 		//Change the cannon rotation
-		FishingLayer::setCannonRotation(target,target->getTouchEndPos());
+		FishingLayer::setCannonRotation(pWidget, pWidget->getTouchEndPosition());
 		
 		//Shoot the bullet
-		bulletEndPosition=target->getTouchEndPos();
-		bulletShoot(target->getTouchEndPos());
+		bulletEndPosition=pWidget->getTouchEndPosition();
+		bulletShoot(pWidget->getTouchEndPosition());
 		
 		
 	}else if(type ==  ui::Widget::TouchEventType::MOVED){
-        
-		//Change the cannon ratation
-		FishingLayer::setCannonRotation(target, target->getTouchMovePos());
+        // TODO: 这里把Ref*强转成Widget*会不会出问题
+        Widget* pWidget = ((Widget*)target);
+		//Change the cannon rotation
+		FishingLayer::setCannonRotation(pWidget, pWidget->getTouchMovePosition());
 	}
 }
 
@@ -189,7 +194,9 @@ void FishingLayer::bulletShoot(Point endPosition){
 		net3->runAction(Sequence::create(scale0000,scale0001,scale0002,scale0003,scale0004,NULL));
 		
 		//Play bullet shoot music effect
-		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(SOUND_FIRE);
+#if USE_AUDIO_ENGINE
+        AudioEngine::preload(SOUND_FIRE);
+#endif
 	}
 }
 
@@ -246,12 +253,17 @@ void FishingLayer::pauseEvent(Ref* target, ui::Widget::TouchEventType type){
 void FishingLayer::turnOffMusic(Ref* target, ui::Widget::TouchEventType type)
 {
     //CocosDenshion::SimpleAudioEngine::getInstance()->stopBackgroundMusic("Audio/music_1.mp3");
-    CocosDenshion::SimpleAudioEngine::getInstance()->pauseBackgroundMusic();
+#if USE_AUDIO_ENGINE
+    AudioEngine::pauseAll();
+#endif
 }
 
 void FishingLayer::turnOnMusic(Ref* target, ui::Widget::TouchEventType type){
     
-	CocosDenshion::SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
+	//CocosDenshion::SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
+#if USE_AUDIO_ENGINE
+    AudioEngine::resumeAll();
+#endif
 }
 
 void FishingLayer::setCannonRotation(Widget* target, Point targetPos){
@@ -324,7 +336,7 @@ void FishingLayer::collideCheck(){//碰撞检测
 				score+=dynamic_cast<FishActor*>(*it_self)->getFishScore();
 				char temp[64];
 				sprintf(temp, "%d",score);
-				scoreLabel->setStringValue(temp);
+				scoreLabel->setString(temp);
 				
 				//Tag the collided fish
 				dynamic_cast<FishActor*>(*it_self)->setTag(200);
@@ -389,7 +401,9 @@ void FishingLayer::removeFishes(){
 	fishActor->removeFromParent();
 	
 	//Play music effect when catch a fish
-	CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(SOUND_COIN);
+#if USE_AUDIO_ENGINE
+    AudioEngine::preload(SOUND_COIN);
+#endif
 }
 
 void FishingLayer::fishActorsInital(){
